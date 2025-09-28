@@ -13,11 +13,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "NEW RELEASES", href: "/new-releases" },
-  { label: "MEN", href: "/men" },
-  { label: "WOMEN", href: "/women" },
-  { label: "KIDS", href: "/kids" },
-  { label: "CUSTOMIZE", href: "/customize" },
+  { label: "New Releases", href: "/new-releases" },
+  { label: "Men", href: "/men" },
+  { label: "Women", href: "/women" },
+  { label: "Kids", href: "/kids" },
+  { label: "Customize", href: "/customize" },
 ];
 
 // Animation variants for header
@@ -103,7 +103,7 @@ const Header: React.FC = () => {
             >
               <Link
                 href={item.href}
-                className="text-white text-sm font-medium uppercase tracking-wider hover:text-amber-400 transition-colors duration-300"
+                className="text-white text-sm font-playfair font-medium  tracking-wider hover:text-amber-400 transition-colors duration-300"
                 aria-label={item.label}
               >
                 {item.label}
