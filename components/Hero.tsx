@@ -47,7 +47,7 @@ const Hero: React.FC = () => {
       name: "JORDAN RED",
       images: [
         "/images/jordan-red.png",
-        "/images/jordan-green2.png",
+        "/images/jordan-red2.png",
         "/images/jordan-green2.png",
         "/images/jordan-blue2.png",
       ],

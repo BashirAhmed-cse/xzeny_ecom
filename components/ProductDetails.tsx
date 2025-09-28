@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
+
+
 export default function AirMaxComponent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 relative flex items-center justify-center p-4 overflow-hidden">
