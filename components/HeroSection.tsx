@@ -1,0 +1,577 @@
+"use client";
+
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { forwardRef, useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
+import { Button } from "./ui/button";
+
+interface HeroSectionProps {
+  selectedProduct: string;
+  selectedColor: string;
+  currentProduct: any;
+  currentImageIndex: number;
+  colorThemes: Record<string, any>;
+  productData: Record<string, any>;
+  isAnimating: boolean;
+  scrollDirection: "up" | "down";
+  activeSection: "hero" | "airmax" | "shoecard";
+  currentColorTheme: any;
+  onProductChange: (product: string) => void;
+  onColorChange: (color: string) => void;
+  onImageIndexChange: (index: number) => void;
+  onNextImage: () => void;
+  onPrevImage: () => void;
+  onScrollDown: () => void;
+}
+
+const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
+  (
+    {
+      selectedProduct,
+      selectedColor,
+      currentProduct,
+      currentImageIndex,
+      colorThemes,
+      productData,
+      isAnimating,
+      scrollDirection,
+      activeSection,
+      currentColorTheme,
+      onProductChange,
+      onColorChange,
+      onImageIndexChange,
+      onNextImage,
+      onPrevImage,
+      onScrollDown,
+    },
+    ref
+  ) => {
+    const [imagesLoaded, setImagesLoaded] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    const [touchStart, setTouchStart] = useState(0);
+    const [touchEnd, setTouchEnd] = useState(0);
+
+    const imageSrc = imageError
+      ? "/images/fallback-shoe.png"
+      : currentProduct.images[currentImageIndex];
+
+    useEffect(() => {
+      const handleKeyPress = (e: KeyboardEvent) => {
+        if (e.key === "ArrowLeft") onPrevImage();
+        if (e.key === "ArrowRight") onNextImage();
+      };
+
+      window.addEventListener("keydown", handleKeyPress);
+      return () => window.removeEventListener("keydown", handleKeyPress);
+    }, [currentImageIndex, selectedProduct]);
+
+    useEffect(() => {
+      const preloadImages = () => {
+        currentProduct.images.forEach((src: string) => {
+          const img = new window.Image();
+          img.src = src;
+        });
+      };
+
+      preloadImages();
+      setImagesLoaded(false);
+      setImageError(false);
+    }, [currentProduct]);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+      setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+      setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchEnd = () => {
+      if (touchStart - touchEnd > 50) onNextImage();
+      if (touchStart - touchEnd < -50) onPrevImage();
+    };
+
+    // Animation variants for main image
+    const imageVariants = {
+      initial: { x: "50%", opacity: 0, scale: 0.8, filter: "blur(8px)" },
+      animate: { x: 0, opacity: 1, scale: 1, filter: "blur(0px)" },
+      exit: { x: "-50%", opacity: 0, scale: 0.8, filter: "blur(8px)" },
+    };
+
+    const scrollImageVariants = {
+      scrollDown: {
+        scale: [1, 1.4, 0.9],
+        y: [0, -200, 150],
+        x: [0, 80, -120],
+        rotate: [0, -15, 10],
+        opacity: [1, 0.95, 0],
+        filter: ["blur(0px) brightness(1)", "blur(2px) brightness(1.3)", "blur(3px) brightness(0.7)"],
+        transition: {
+          duration: 0.7,
+          times: [0, 0.5, 1],
+          ease: [0.25, 0.8, 0.25, 1],
+        },
+      },
+      scrollUp: {
+        scale: [0.9, 1.4, 1],
+        y: [150, -200, 0],
+        x: [-120, 80, 0],
+        rotate: [10, -15, 0],
+        opacity: [0, 0.95, 1],
+        filter: ["blur(3px) brightness(0.7)", "blur(2px) brightness(1.3)", "blur(0px) brightness(1)"],
+        transition: {
+          duration: 0.7,
+          times: [0, 0.5, 1],
+          ease: [0.25, 0.8, 0.25, 1],
+        },
+      },
+      normal: {
+        scale: 1,
+        y: 0,
+        x: 0,
+        rotate: 0,
+        opacity: 1,
+        filter: "blur(0px) brightness(1)",
+      },
+    };
+
+    // Get the correct animation state for both mobile and desktop
+    const getImageAnimation = () => {
+      if (isAnimating && scrollDirection === "down" && activeSection === "hero") {
+        return {
+          variants: scrollImageVariants,
+          animate: "scrollDown"
+        };
+      } else if (isAnimating && scrollDirection === "up" && activeSection === "airmax") {
+        return {
+          variants: scrollImageVariants,
+          animate: "scrollUp"
+        };
+      } else {
+        return {
+          variants: imageVariants,
+          animate: "animate"
+        };
+      }
+    };
+
+    const imageAnimation = getImageAnimation();
+
+    return (
+      <motion.section
+        ref={ref}
+        className={cn(
+          "min-h-screen flex items-center justify-center relative overflow-hidden",
+          "pt-16 lg:pt-0 text-white px-4 sm:px-6 lg:px-8"
+        )}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        style={{ backgroundColor: currentColorTheme.bg }}
+      >
+        <div className="relative z-10 w-full max-w-7xl mx-auto mt-12 lg:mt-14">
+          <div className="w-full">
+            {/* Mobile: Vertical Layout */}
+            <div className="lg:hidden flex flex-col gap-6">
+              {/* Title - Mobile */}
+              <motion.div
+                className="text-center"
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <h1 className="text-3xl font-playfair font-semibold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  Wear your Style
+                </h1>
+                <p className="text-lg text-gray-200 mt-2">with comfort.</p>
+              </motion.div>
+
+              {/* Product Thumbnails - Mobile Horizontal */}
+              <motion.div
+                className="flex justify-center gap-3"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+              >
+                {(Object.keys(productData) as string[]).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      onProductChange(key);
+                      onColorChange(key);
+                      onImageIndexChange(0);
+                    }}
+                    className={`w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${
+                      selectedProduct === key
+                        ? "border-white scale-110 shadow-lg shadow-white/20"
+                        : "border-gray-600 hover:border-white"
+                    }`}
+                  >
+                    <Image
+                      src={productData[key].images[0]}
+                      alt={productData[key].name}
+                      width={64}
+                      height={48}
+                      className="object-cover w-full h-full"
+                    />
+                  </button>
+                ))}
+              </motion.div>
+
+              {/* Main Image - Mobile with Scroll Animation */}
+              <div className="relative flex justify-center items-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onPrevImage}
+                  className="absolute left-2 z-20 text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-10 w-10"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+                
+                <div className="relative w-full max-w-[400px]">
+                  
+                  
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`${selectedProduct}-${currentImageIndex}`}
+                      variants={imageAnimation.variants}
+                      initial="initial"
+                      animate={imageAnimation.animate}
+                      exit="exit"
+                      transition={{ duration: 0.7, ease: "easeInOut" }}
+                      className="relative z-10 cursor-pointer"
+                      onTouchStart={handleTouchStart}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
+                      onClick={onScrollDown} // Added scroll on click for mobile
+                    >
+                      <Image
+                        src={imageSrc}
+                        alt={currentProduct.name}
+                        width={400}
+                        height={350}
+                        className="object-contain w-full h-auto"
+                        priority
+                        onLoad={() => setImagesLoaded(true)}
+                        onError={() => setImageError(true)}
+                      />
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onNextImage}
+                  className="absolute right-2 z-20 text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-10 w-10"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {/* Image Indicators - Mobile */}
+              <motion.div
+                className="flex gap-2 justify-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7, duration: 0.6 }}
+              >
+                {currentProduct.images.map((_: any, index: number) => (
+                  <button
+                    key={index}
+                    onClick={() => onImageIndexChange(index)}
+                    className={`w-2.5 h-2.5 rounded-full transition-all ${
+                      index === currentImageIndex
+                        ? "bg-white scale-125"
+                        : "bg-gray-600"
+                    }`}
+                  />
+                ))}
+              </motion.div>
+
+              {/* Product Name - Mobile */}
+              <motion.div
+                className="text-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8, duration: 0.6 }}
+              >
+                <span className="text-xl font-playfair font-semibold text-white">
+                  {currentProduct.name}
+                </span>
+              </motion.div>
+
+              {/* CTA Button - Mobile */}
+              <motion.button
+                className="relative flex items-center justify-center gap-3 
+                           w-full px-6 py-4 
+                           rounded-xl font-semibold text-lg 
+                           text-white bg-gradient-to-r from-gray-900 to-gray-700 
+                           border-0 shadow-lg
+                           active:scale-95 transition-all duration-300
+                           group overflow-hidden mt-4"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 1, duration: 0.6 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onScrollDown} // Added scroll on button click for mobile
+              >
+                {/* Shine effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent 
+                                -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] 
+                                transition-transform duration-1000" />
+                
+                <ShoppingCart className="w-6 h-6 transition-transform group-hover:scale-110" />
+                <span className="font-semibold tracking-wide">Discover More</span>
+              </motion.button>
+
+              {/* Thumbnail Previews - Mobile */}
+              <motion.div
+                className="flex gap-3 justify-center mt-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.9, duration: 0.6 }}
+              >
+                {currentProduct.images.map((img: string, index: number) => (
+                  <button
+                    key={index}
+                    onClick={() => onImageIndexChange(index)}
+                    className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                      currentImageIndex === index
+                        ? "border-white scale-105 shadow-md shadow-white/20"
+                        : "border-gray-600"
+                    }`}
+                  >
+                    <Image
+                      src={img}
+                      alt={`Preview ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </button>
+                ))}
+              </motion.div>
+            </div>
+
+            {/* Desktop: Original Layout */}
+            <div className="hidden lg:flex flex-col-reverse lg:flex-row items-center justify-center gap-6 relative">
+              {/* Left Side Title */}
+              <motion.div
+                className="flex flex-col gap-6 items-start self-start"
+                initial={{ y: 80, opacity: 0, filter: "blur(10px)" }}
+                animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
+                transition={{
+                  delay: 0.3,
+                  duration: 0.9,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+              >
+                <motion.h1
+                  className="text-4xl font-light leading-tight"
+                  initial={{ y: 30, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  whileHover={{ scale: 1.02 }}
+                  transition={{
+                    delay: 0.5,
+                    duration: 0.8,
+                    scale: { duration: 0.2 },
+                  }}
+                >
+                  <motion.span
+                    className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold"
+                    whileHover={{ backgroundPosition: "100% 50%" }}
+                    style={{
+                      backgroundSize: "200% 100%",
+                      backgroundPosition: "0% 50%",
+                      transition: "background-position 0.5s ease",
+                    }}
+                  >
+                    Wear your Style
+                  </motion.span>
+                  <motion.span
+                    className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.8, duration: 0.6 }}
+                  >
+                    with comfort.
+                  </motion.span>
+                </motion.h1>
+              </motion.div>
+
+              {/* Main Shoe Section */}
+              <div className="relative flex-1 flex justify-center items-center overflow-hidden max-w-[800px] mx-auto">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onPrevImage}
+                  className="text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-12 w-12 transition-all hover:scale-110"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Button>
+                
+                <Image
+                  src="/ellips.svg"
+                  alt="Ellipse Background"
+                  width={700}
+                  height={650}
+                  className="absolute object-contain opacity-80 top-1/2 left-1/2 -translate-x-1/2 translate-y-1/3 z-0 mt-25"
+                />
+                
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`${selectedProduct}-${currentImageIndex}`}
+                    variants={imageAnimation.variants}
+                    initial="initial"
+                    animate={imageAnimation.animate}
+                    exit="exit"
+                    transition={{ duration: 0.7, ease: "easeInOut" }}
+                    className="relative z-10 cursor-pointer"
+                    whileHover={{ scale: 1.05 }}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onClick={onScrollDown}
+                  >
+                    <Image
+                      src={imageSrc}
+                      alt={currentProduct.name}
+                      width={800}
+                      height={700}
+                      className="object-contain w-full h-auto max-h-[700px] sm:max-h-[600px] md:max-h-[700px]"
+                      priority
+                      onLoad={() => setImagesLoaded(true)}
+                      onError={() => setImageError(true)}
+                    />
+                  </motion.div>
+                </AnimatePresence>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onNextImage}
+                  className="text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-12 w-12 transition-all hover:scale-110"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </Button>
+              </div>
+
+              {/* Thumbnails - Switch Product */}
+              <motion.div
+                className="flex flex-row lg:flex-col gap-4 items-start self-start"
+                initial="initial"
+                animate="animate"
+              >
+                {(Object.keys(productData) as string[]).map((key) => (
+                  <motion.button
+                    key={key}
+                    initial={{ scale: 0.8, opacity: 0, x: 20 }}
+                    animate={{ scale: 1, opacity: 1, x: 0 }}
+                    onClick={() => {
+                      onProductChange(key);
+                      onColorChange(key);
+                      onImageIndexChange(0);
+                    }}
+                    className={`relative w-24 h-16 lg:w-28 lg:h-20 rounded-xl overflow-hidden border-2 transition-all ${
+                      selectedProduct === key
+                        ? "border-white scale-110 shadow-lg shadow-white/20"
+                        : "border-gray-700 hover:border-white"
+                    } group`}
+                    whileHover={{
+                      scale: 1.15,
+                      y: -5,
+                      boxShadow: "0 8px 20px rgba(255,255,255,0.15)",
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Image
+                      src={productData[key].images[0]}
+                      alt={productData[key].name}
+                      fill
+                      className="object-cover transition-transform group-hover:scale-110"
+                    />
+                  </motion.button>
+                ))}
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Desktop Footer */}
+          <div className="hidden lg:flex flex-col lg:flex-row justify-between items-center mt-8 gap-6">
+            <motion.span
+              className="text-2xl font-light text-gray-200 font-playfair"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9, duration: 0.6 }}
+            >
+              {currentProduct.name}
+            </motion.span>
+
+            <motion.div
+              className="flex gap-4 items-center"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{
+                delay: 0.6,
+                type: "spring",
+                stiffness: 200,
+                damping: 20,
+              }}
+            >
+              <div className="flex gap-2">
+                {currentProduct.images.map((img: string, index: number) => (
+                  <button
+                    key={index}
+                    onClick={() => onImageIndexChange(index)}
+                    className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      currentImageIndex === index
+                        ? "border-white scale-105 shadow-md shadow-white/20"
+                        : "border-gray-700 hover:border-white hover:scale-105"
+                    }`}
+                  >
+                    <Image
+                      src={img}
+                      alt={`Preview ${index + 1}`}
+                      fill
+                      className="object-cover transition-transform hover:scale-110"
+                    />
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.button
+              className="relative flex items-center justify-center gap-3 
+                         w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-4 
+                         rounded-xl font-semibold text-base sm:text-lg 
+                         text-white bg-gradient-to-r from-gray-900 to-gray-700 shadow-gray-900/25
+                         border-0 hover:shadow-xl hover:shadow-purple-500/40 
+                         hover:from-purple-700 hover:to-blue-600
+                         active:scale-95 transition-all duration-300
+                         group overflow-hidden"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 1.1, duration: 0.6 }}
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onScrollDown}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent 
+                              -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] 
+                              transition-transform duration-1000" />
+              <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:scale-110" />
+              <span className="font-semibold tracking-wide">Discover More</span>
+            </motion.button>
+          </div>
+        </div>
+      </motion.section>
+    );
+  }
+);
+
+HeroSection.displayName = "HeroSection";
+
+export default HeroSection;

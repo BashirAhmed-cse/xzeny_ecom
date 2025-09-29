@@ -8,7 +8,6 @@ interface ShoeCardProps {
   activeSection: "hero" | "airmax" | "shoecard";
   isAnimating: boolean;
   scrollDirection: "up" | "down";
-  currentColorTheme: any;
   onScrollUp: () => void;
 }
 
@@ -16,7 +15,6 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
   activeSection,
   isAnimating,
   scrollDirection,
-  currentColorTheme,
   onScrollUp,
 }) => {
   // Animation variants for 3-section flow
@@ -97,8 +95,7 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
 
   return (
     <motion.div 
-      className="min-h-screen relative flex items-center justify-center p-4 sm:p-6 overflow-hidden"
-      style={{ backgroundColor: currentColorTheme.bg }}
+      className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative flex items-center justify-center p-4 sm:p-6 overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: activeSection === "shoecard" ? 1 : 0.3 }}
       transition={{ duration: 0.5 }}
@@ -106,7 +103,7 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
       {/* Scroll Up Button */}
       <motion.button
         onClick={onScrollUp}
-        className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 text-white/85 hover:text-white backdrop-blur-md bg-white/20 hover:bg-white/30 px-5 py-2 rounded-full border border-white/25 transition-all duration-300"
+        className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 text-gray-700 hover:text-gray-900 backdrop-blur-md bg-white/80 hover:bg-white px-5 py-2 rounded-full border border-gray-200 transition-all duration-300"
         whileHover={{ scale: 1.15 }}
         whileTap={{ scale: 0.9 }}
         initial={{ opacity: 0, y: -20 }}
@@ -125,13 +122,13 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
           initial={{ scale: 0, rotate: 0 }}
           animate={{ scale: 1, rotate: 180 }}
           transition={{ duration: 2, delay: 0.5 }}
-          className="absolute -top-20 sm:-top-40 -right-20 sm:-right-40 w-40 h-40 sm:w-80 sm:h-80 bg-gradient-to-r from-white/20 to-white/10 rounded-full blur-2xl sm:blur-3xl"
+          className="absolute -top-20 sm:-top-40 -right-20 sm:-right-40 w-40 h-40 sm:w-80 sm:h-80 bg-gradient-to-r from-red-500 to-pink-500 rounded-full blur-2xl sm:blur-3xl opacity-10"
         />
         <motion.div
           initial={{ scale: 0, rotate: 180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ duration: 2, delay: 0.7 }}
-          className="absolute -bottom-20 sm:-bottom-40 -left-20 sm:-left-40 w-40 h-40 sm:w-80 sm:h-80 bg-gradient-to-r from-white/10 to-white/20 rounded-full blur-2xl sm:blur-3xl"
+          className="absolute -bottom-20 sm:-bottom-40 -left-20 sm:-left-40 w-40 h-40 sm:w-80 sm:h-80 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full blur-2xl sm:blur-3xl opacity-10"
         />
       </div>
 
@@ -147,7 +144,7 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
           alt="Nike Swoosh"
           width={1000}
           height={1000}
-          className="object-contain w-[80%] sm:w-full max-w-[600px] opacity-20"
+          className="object-contain w-[80%] sm:w-full max-w-[600px]"
         />
       </motion.div>
 
@@ -168,7 +165,7 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
           onClick={onScrollUp}
         >
           {/* Glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/10 blur-xl rounded-full scale-110" />
+          <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-blue-500/20 blur-xl rounded-full scale-110" />
           
           <Image
             src="/images/jordan-red.png"
@@ -208,9 +205,9 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1.5 }}
-            whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(255,255,255,0.3)" }}
+            whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239,68,68,0.3)" }}
             whileTap={{ scale: 0.95 }}
-            className="w-full sm:w-auto bg-white text-gray-900 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg shadow-xl text-center hover:bg-gray-100 transition-all duration-300"
+            className="w-full sm:w-auto bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg shadow-xl text-center"
           >
             Explore Collection →
           </motion.button>
@@ -221,12 +218,12 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
             transition={{ duration: 1, delay: 0.8, type: "spring" }}
             className="text-center sm:text-right w-full sm:w-auto"
           >
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight">
-              <span className="bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 leading-tight">
+              <span className="bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                 Quality
               </span>
               <br />
-              <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
                 that speaks.
               </span>
             </h1>

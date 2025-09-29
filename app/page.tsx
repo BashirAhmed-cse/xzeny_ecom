@@ -11,8 +11,8 @@ const HomePage = () => {
   return (
     <div>
       <Hero/>
-      <ProductDetails/>
-      <ShoeCard/>
+      {/* <ProductDetails/> */}
+      {/* <ShoeCard/> */}
     </div>
   )
 }

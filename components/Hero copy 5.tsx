@@ -7,7 +7,7 @@ import HeroSection from "./HeroSection";
 import AirMaxSection from "./AirMaxSection";
 import ShoeCard from "./ShoeCard";
 
-type ProductColor = "black" | "red" | "blue" | "green";
+type ProductColor = "black" | "red";
 
 interface Product {
   name: string;
@@ -30,70 +30,28 @@ const Hero: React.FC = () => {
   const lastScrollY = useRef(0);
   const isScrolling = useRef(false);
 
-  // Enhanced color themes with gradients
-  const colorThemes: Record<ProductColor, { bg: string; gradient: string; text: string }> = {
-    black: {
-      bg: "#0a0a0a",
-      gradient: "from-gray-900/90 to-gray-800/90",
-      text: "text-white"
-    },
-    red: {
-      bg: "#9b1b1b",
-      gradient: "from-red-900/90 to-red-700/90",
-      text: "text-white"
-    },
-    blue: {
-      bg: "#1b4b9b",
-      gradient: "from-blue-900/90 to-blue-700/90",
-      text: "text-white"
-    },
-    green: {
-      bg: "#1b9b4b",
-      gradient: "from-green-900/90 to-green-700/90",
-      text: "text-white"
-    },
+  const colorThemes: Record<ProductColor, string> = {
+    black: "#0a0a0a",
+    red: "#9b1b1b",
   };
 
   const productData: Record<ProductColor, Product> = {
     black: {
       name: "AIR MAX 270",
-       images: [
-        "/images/jordan-blue.png",
-        "/images/jordan-blue2.png",
-        "/images/jordan-green.png",
-        "/images/jordan-green2.png",
-      ],
+      images: ["/images/jordan-blue.png", "/images/jordan-blue2.png"],
       releaseDate: "2016-10-06",
       colorWay: "SAIL/STARFISH-BLACK",
     },
     red: {
       name: "AIR MAX 90",
-      images: [
-        "/images/jordan-red.png",
-        "/images/jordan-green2.png",
-        "/images/jordan-green2.png",
-        "/images/jordan-blue2.png",
-      ],
+      images: ["/images/jordan-red.png", "/images/jordan-red2.png"],
       releaseDate: "2025-10-06",
       colorWay: "SAIL/SCARLET-RED",
     },
-    // blue: {
-    //   name: "AIR MAX 95",
-    //   images: ["/images/jordan-blue.png", "/images/jordan-blue2.png"],
-    //   releaseDate: "2024-03-15",
-    //   colorWay: "SAIL/OCEAN-BLUE",
-    // },
-    // green: {
-    //   name: "AIR MAX 97",
-    //   images: ["/images/jordan-red.png", "/images/jordan-red2.png"],
-    //   releaseDate: "2024-06-20",
-    //   colorWay: "SAIL/FOREST-GREEN",
-    // },
   };
 
   const currentProduct = productData[selectedProduct];
   const imageSrc = currentProduct.images[currentImageIndex];
-  const currentColorTheme = colorThemes[selectedColor];
 
   const handleNext = () => {
     setCurrentImageIndex((prev) => (prev === currentProduct.images.length - 1 ? 0 : prev + 1));
@@ -204,7 +162,6 @@ const Hero: React.FC = () => {
         isAnimating={isAnimating}
         scrollDirection={scrollDirection}
         activeSection={activeSection}
-        currentColorTheme={currentColorTheme}
         onProductChange={setSelectedProduct}
         onColorChange={setSelectedColor}
         onImageIndexChange={setCurrentImageIndex}
@@ -218,7 +175,7 @@ const Hero: React.FC = () => {
           activeSection={activeSection}
           isAnimating={isAnimating}
           scrollDirection={scrollDirection}
-          currentColorTheme={currentColorTheme}
+          backgroundColor={colorThemes[selectedColor]}
           productImage={imageSrc}
           currentProduct={currentProduct}
           onScrollUp={() => animateScroll("up")}
@@ -231,7 +188,6 @@ const Hero: React.FC = () => {
           activeSection={activeSection}
           isAnimating={isAnimating}
           scrollDirection={scrollDirection}
-          currentColorTheme={currentColorTheme}
           onScrollUp={() => animateScroll("up")}
         />
       </div>
