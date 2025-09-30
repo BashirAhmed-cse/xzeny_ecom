@@ -200,7 +200,6 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
 
     const imageAnimation = getImageAnimation();
 
-
     return (
       <motion.section
         ref={ref}
@@ -281,51 +280,46 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                 </Button>
 
                 <div className="relative w-full max-w-[360px] sm:max-w-[400px]">
-  <AnimatePresence mode="wait"> {/* smoother on mobile */}
-    <motion.div
-      key={`${selectedProduct}-${currentImageIndex}`}
-      variants={{
-        initial: { opacity: 0, x: 50 },   // simple fade+slide
-        animate: { opacity: 1, x: 0 },
-        exit: { opacity: 0, x: -50 },
-      }}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      transition={{ type: "spring", stiffness: 250, damping: 25 }}
-      className="relative z-10 cursor-pointer will-change-transform will-change-opacity"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onClick={onScrollDown}
-    >
-      {imageError ? (
-        <div className="flex items-center justify-center h-[320px] sm:h-[350px] text-red-500">
-          Failed to load image
-        </div>
-      ) : !imagesLoaded ? (
-        <div className="flex items-center justify-center h-[320px] sm:h-[350px]">
-          <div
-            className="animate-spin h-8 w-8 border-4 border-t-white border-gray-600 rounded-full"
-          />
-        </div>
-      ) : (
-        <Image
-          src={imageSrc}
-          alt={currentProduct.name}
-          width={400}
-          height={350}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-contain w-full h-auto"
-          priority
-          onLoad={() => setImagesLoaded(true)}
-          onError={() => setImageError(true)}
-        />
-      )}
-    </motion.div>
-  </AnimatePresence>
-</div>
-
+                  <AnimatePresence mode={isNavClick ? "sync" : "wait"}>
+                    <motion.div
+                      key={`${selectedProduct}-${currentImageIndex}`}
+                      variants={imageAnimation.variants}
+                      initial="initial"
+                      animate={imageAnimation.animate}
+                      exit="exit"
+                      transition={imageAnimation.transition}
+                      className="relative z-10 cursor-pointer"
+                      onTouchStart={handleTouchStart}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
+                      onClick={onScrollDown}
+                    >
+                      {imageError ? (
+                        <div className="flex items-center justify-center h-[320px] sm:h-[350px] text-red-500">
+                          Failed to load image
+                        </div>
+                      ) : !imagesLoaded ? (
+                        <div className="flex items-center justify-center h-[320px] sm:h-[350px]">
+                          <div
+                            className={`animate-spin h-8 w-8 border-4 border-t-${currentColorTheme.accent} border-gray-600 rounded-full`}
+                          />
+                        </div>
+                      ) : (
+                        <Image
+                          src={imageSrc}
+                          alt={currentProduct.name}
+                          width={400}
+                          height={350}
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-contain w-full h-auto"
+                          priority
+                          onLoad={() => setImagesLoaded(true)}
+                          onError={() => setImageError(true)}
+                        />
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
 
                 <Button
                   variant="ghost"

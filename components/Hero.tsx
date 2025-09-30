@@ -232,6 +232,8 @@ const Hero: React.FC = () => {
           isAnimating={isAnimating}
           scrollDirection={scrollDirection}
           currentColorTheme={currentColorTheme}
+            productImage={imageSrc}
+          currentProduct={currentProduct}
           onScrollUp={() => animateScroll("up")}
         />
       </div>
