@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { motion, Variants, useScroll, useTransform } from "framer-motion";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import CartDrawer from "./CartDrawer";
 
 interface NavItem {
   label: string;
@@ -19,7 +20,10 @@ const navItems: NavItem[] = [
   { label: "Kids", href: "/kids" },
   { label: "Customize", href: "/customize" },
 ];
-
+  const colorThemes = {
+    black: { bg: "#0a0a0a", gradient: "from-gray-900/90 to-gray-800/90", text: "text-white" },
+    red: { bg: "#9b1b1b", gradient: "from-red-900/90 to-red-700/90", text: "text-white" },
+  };
 const ANIMATION_DURATION = 500; // ms, synced with HeroSection
 const ANIMATION_DURATION_S = ANIMATION_DURATION / 1000;
 
@@ -180,7 +184,7 @@ const Header: React.FC = () => {
 
           {/* Shopping Cart */}
           <motion.div variants={iconVariants} whileHover="hover" className="relative">
-            <Button
+            {/* <Button
               variant="ghost"
               size="icon"
               className="text-white hover:bg-white/20 rounded-full"
@@ -196,7 +200,8 @@ const Header: React.FC = () => {
                   {cartCount}
                 </motion.span>
               )}
-            </Button>
+            </Button> */}
+            <CartDrawer currentColorTheme={colorThemes.black}/>
           </motion.div>
         </motion.div>
       </div>
