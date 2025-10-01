@@ -23,8 +23,8 @@ interface ColorTheme {
 }
 
 const Hero: React.FC = () => {
-  const [selectedProduct, setSelectedProduct] = useState<ProductColor>("black");
-  const [selectedColor, setSelectedColor] = useState<ProductColor>("black");
+  const [selectedProduct, setSelectedProduct] = useState<ProductColor>("red");
+  const [selectedColor, setSelectedColor] = useState<ProductColor>("red");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [activeSection, setActiveSection] = useState<"hero" | "airmax" | "shoecard">("hero");
@@ -47,13 +47,13 @@ const Hero: React.FC = () => {
   const productData: Record<ProductColor, Product> = {
     black: {
       name: "AIR MAX 270",
-      images: ["/images/jordan-blue.png", "/images/jordan-blue2.png"],
+      images: ["/images/jordan-blue.png","/images/jordan-green2.png", "/images/jordan-blue2.png","/images/jordan-green2.png"],
       releaseDate: "2016-10-06",
       colorWay: "SAIL/STARFISH-BLACK",
     },
     red: {
       name: "AIR MAX 90",
-      images: ["/images/jordan-red.png", "/images/jordan-red2.png"],
+      images: ["/images/jordan-red.png","/images/jordan-blue2.png", "/images/jordan-red2.png","/images/jordan-blue2.png",],
       releaseDate: "2025-10-06",
       colorWay: "SAIL/SCARLET-RED",
     },
