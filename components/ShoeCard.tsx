@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ArrowUp, ZoomIn, Sparkles } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 
 type ProductColor = "black" | "red";
 
@@ -32,16 +32,16 @@ interface ShoeCardProps {
   setShowPreview?: (value: boolean) => void;
 }
 
-const ANIMATION_DURATION = 800;
+const ANIMATION_DURATION = 700; // ms, synced with Hero
 const ANIMATION_DURATION_S = ANIMATION_DURATION / 1000;
 
 const defaultFeatures = [
-  { text: "Slip-resistant", emoji: "🔒" },
-  { text: "Lightweight", emoji: "⚡" },
-  { text: "Eco-friendly", emoji: "🌿" },
-  { text: "Quick-dry", emoji: "💨" },
-  { text: "Shock absorption", emoji: "🛡️" },
-  { text: "Durable", emoji: "🪡" },
+  { text: "Slip-resistant", emoji: "🔒", finalX: -320, finalY: -40, rotation: -5, delay: 0.1 },
+  { text: "Lightweight", emoji: "⚡", finalX: 320, finalY: -60, rotation: 8, delay: 0.2 },
+  { text: "Eco-friendly", emoji: "🌿", finalX: -400, finalY: 80, rotation: -8, delay: 0.3 },
+  { text: "Quick-dry", emoji: "💨", finalX: 350, finalY: 60, rotation: 6, delay: 0.4 },
+  { text: "Shock absorption", emoji: "🛡️", finalX: 340, finalY: 150, rotation: 12, delay: 0.5 },
+  { text: "Durable", emoji: "🪡", finalX: -340, finalY: 150, rotation: -12, delay: 0.6 },
 ];
 
 const ShoeCard: React.FC<ShoeCardProps> = ({
@@ -56,160 +56,137 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
 }) => {
   const [imageError, setImageError] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
 
   const isMobile = useMemo(() => typeof window !== "undefined" && window.innerWidth < 1024, []);
-  const baseOffset = isMobile ? 120 : 280;
+  const baseOffset = isMobile ? 100 : 320; // Responsive tag positions
 
-  // Enhanced feature tags with center-to-sides animation
-  const featureTags = useMemo(() => {
-    const features = currentProduct.features || defaultFeatures;
-    
-    if (isMobile) {
-      // Mobile: Stack tags horizontally in rows
-      return features.map((tag, i) => {
-        const row = Math.floor(i / 3);
-        const col = i % 3;
-        const horizontalPositions = [-80, 0, 80];
-        const verticalPositions = [60, 120, 180];
-        
-        return {
-          ...tag,
-          startX: 0,
-          startY: 0,
-          finalX: horizontalPositions[col],
-          finalY: verticalPositions[row],
-          rotation: col === 0 ? -5 : col === 2 ? 5 : 0,
-          delay: 0.4 + i * 0.1,
-        };
-      });
-    } else {
-      // Desktop: Original side placement
-      return features.map((tag, i) => {
-        const isLeftSide = i < 3;
-        const positionIndex = i % 3;
-        const verticalPositions = [-100, 0, 100];
-        
-        return {
-          ...tag,
-          startX: 0,
-          startY: 0,
-          finalX: isLeftSide ? -baseOffset : baseOffset,
-          finalY: verticalPositions[positionIndex],
-          rotation: isLeftSide ? -8 : 8,
-          delay: 0.4 + i * 0.15,
-        };
-      });
-    }
-  }, [currentProduct.features, baseOffset, isMobile]);
+  // Dynamic features or fallback
+  const featureTags = (currentProduct.features || defaultFeatures).map((tag, i) => ({
+    ...tag,
+    finalX: i % 2 === 0 ? -baseOffset : baseOffset,
+    finalY: tag.finalY || (i < 2 ? -60 : i < 4 ? 60 : 150),
+    rotation: tag.rotation || (i % 2 === 0 ? -5 - i : 5 + i),
+    delay: 0.1 + i * 0.1,
+  }));
 
-  // Enhanced particle system
+  // Memoized particle positions
   const particlePositions = useMemo(
     () =>
-      [...Array(isMobile ? 12 : 24)].map((_, i) => ({
-        x: Math.cos(i * 0.26) * (isMobile ? 80 : 160),
-        y: Math.sin(i * 0.26) * (isMobile ? 80 : 160),
-        size: Math.random() * 3 + 1,
-        delay: 0.6 + i * 0.05,
-        duration: 2 + Math.random() * 2,
+      [...Array(isMobile ? 4 : 8)].map((_, i) => ({
+        x: Math.cos(i * 0.78) * (isMobile ? 50 : 100),
+        y: Math.sin(i * 0.78) * (isMobile ? 50 : 100),
+        delay: 0.5 + i * 0.1,
       })),
     [isMobile]
   );
 
-  // Enhanced image animations
   const imageVariants = {
     scrollDownEnter: {
-      scale: isMobile ? [0.8, 1.15, 1] : [0.7, 1.25, 1],
-      x: isMobile ? ["60vw", 30, 0] : ["100vw", 60, 0],
-      y: isMobile ? [60, -20, 0] : [100, -30, 0],
-      rotateX: isMobile ? [15, -8, 0] : [20, -10, 0],
-      rotateY: isMobile ? [-12, 6, 0] : [-15, 8, 0],
-      opacity: [0, 0.8, 1],
-      filter: ["blur(12px) brightness(0.6)", "blur(4px) brightness(1.2)", "blur(0px) brightness(1)"],
+      scale: 1,
+      y: 0,
+      x: 0,
+      rotate: 0,
+      opacity: 1,
+      filter: "blur(0px) brightness(1)",
       transition: { 
-        duration: ANIMATION_DURATION_S * 1.3, 
-        times: [0, 0.7, 1], 
-        ease: [0.34, 1.56, 0.64, 1] 
+        duration: ANIMATION_DURATION_S, 
+        ease: [0.25, 0.8, 0.25, 1] 
       },
     },
     scrollUpExit: {
-      scale: isMobile ? [1, 1.15, 0.8] : [1, 1.25, 0.7],
-      x: isMobile ? [0, 30, -60] : [0, 60, -100],
-      y: isMobile ? [0, -20, 60] : [0, -30, 100],
-      rotateX: isMobile ? [0, 8, -15] : [0, 10, -20],
-      rotateY: isMobile ? [0, -6, 12] : [0, -8, 15],
-      opacity: [1, 0.8, 0],
-      filter: ["blur(0px) brightness(1)", "blur(4px) brightness(1.2)", "blur(12px) brightness(0.6)"],
+      scale: isMobile ? 0.95 : 0.9,
+      y: isMobile ? 100 : 150,
+      x: isMobile ? 80 : 120,
+      rotate: -10,
+      opacity: 0,
+      filter: "blur(3px) brightness(0.7)",
       transition: { 
-        duration: ANIMATION_DURATION_S * 1.3, 
-        times: [0, 0.7, 1], 
-        ease: [0.34, 1.56, 0.64, 1] 
+        duration: ANIMATION_DURATION_S, 
+        ease: [0.25, 0.8, 0.25, 1] 
       },
     },
     normal: {
       scale: 1,
-      x: 0,
       y: 0,
-      rotateX: 0,
-      rotateY: 0,
+      x: 0,
+      rotate: 0,
       opacity: 1,
       filter: "blur(0px) brightness(1)",
     },
     hover: {
-      scale: isMobile ? 1.05 : 1.08,
-      y: -8,
-      rotateX: () => mousePos.y * 12,
-      rotateY: () => mousePos.x * 12,
-      translateZ: isMobile ? 30 : 60,
-      filter: "blur(0px) brightness(1.1) contrast(1.05)",
-      transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
+      scale: isMobile ? 1.05 : 1.1,
+      y: -10,
+      rotate: -2,
+      transition: { duration: 0.3 },
     },
   };
 
-  // Enhanced tag animations with center-to-sides movement
+  const tagContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.3,
+      }
+    },
+    exit: {
+      opacity: 0,
+      transition: {
+        staggerChildren: 0.05,
+        staggerDirection: -1,
+      }
+    }
+  };
+
   const tagVariants = {
     hidden: { 
       opacity: 0, 
-      scale: 0.5, 
+      scale: 0.3, 
       x: 0, 
       y: 0,
-      rotate: 0 
+      transition: { duration: 0.3 }
     },
-    visible: (config: any) => ({
+    visible: (config: { delay: number; finalX: number; finalY: number; rotation: number }) => ({
       opacity: 1,
       scale: 1,
       x: config.finalX,
       y: config.finalY,
       rotate: config.rotation,
       transition: { 
-        duration: 1.4, 
+        duration: 0.8, 
         delay: config.delay, 
         type: "spring", 
-        stiffness: 80, 
-        damping: 10,
-        x: { duration: 1.2, ease: [0.34, 1.56, 0.64, 1] },
-        y: { duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }
+        stiffness: 100, 
+        damping: 15 
       },
     }),
-    hover: {
-      scale: 1.2,
-      y: (config: any) => config.finalY - 5,
-      backgroundColor: "rgba(255,255,255,1)",
-      boxShadow: "0 20px 40px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.8)",
-      color: "#000",
-      transition: { duration: 0.25, ease: "easeOut" },
+    exit: {
+      opacity: 0,
+      scale: 0.3,
+      x: 0,
+      y: 0,
+      transition: { duration: 0.4 }
     },
-    tap: { scale: 0.85, transition: { duration: 0.1 } },
+    hover: {
+      scale: 1.15,
+      y: (config: { finalY: number }) => config.finalY - 8,
+      backgroundColor: "rgba(255,255,255,0.95)",
+      boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
+      transition: { duration: 0.3 },
+    },
+    tap: { 
+      scale: 0.9, 
+      transition: { duration: 0.1 } 
+    },
   };
 
   const backgroundVariants = {
-    hidden: { scale: 0.4, opacity: 0, rotate: -45 },
+    hidden: { scale: 0.6, opacity: 0 },
     visible: { 
-      scale: 1.1, 
+      scale: 1, 
       opacity: 0.08, 
-      rotate: 0,
-      transition: { duration: 2.5, ease: "easeOut", delay: 0.3 } 
+      transition: { duration: 1.5, ease: "easeOut" } 
     },
   };
 
@@ -218,80 +195,60 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
     setTimeout(() => onScrollUp(), ANIMATION_DURATION);
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isMobile) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setMousePos({ x, y });
-  };
-
-  const handleMouseEnter = () => setIsHovered(true);
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    setMousePos({ x: 0, y: 0 });
+  const handleImageKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleImageClick();
+    }
   };
 
   const imageSrc = imageError ? "/images/fallback-shoe.png" : productImage;
 
+  // Determine animation states
+  const isEnteringShoeCard = isAnimating && scrollDirection === "down" && activeSection === "shoecard";
+  const isExitingToAirmax = isAnimating && scrollDirection === "up" && activeSection === "airmax";
+  const isActive = activeSection === "shoecard";
+
   return (
     <motion.div
-      className="min-h-screen relative flex items-center justify-center p-4 sm:p-8 overflow-hidden font-modern"
-      style={{ backgroundColor: currentColorTheme.bg, fontFamily: "Inter, Poppins, sans-serif" }}
+      className="min-h-screen relative flex items-center justify-center p-4 sm:p-6 overflow-hidden"
+      style={{ backgroundColor: currentColorTheme.bg }}
       initial={{ opacity: 0 }}
-      animate={{ opacity: activeSection === "shoecard" ? 1 : 0.3 }}
-      transition={{ duration: 0.7, ease: "easeOut" }}
+      animate={{ opacity: isActive ? 1 : 0.3 }}
+      transition={{ duration: 0.5 }}
       role="region"
       aria-label={`Shoe card for ${currentProduct.name}`}
     >
-      {/* Enhanced Scroll Up Button */}
+      {/* Scroll Up Button */}
       <motion.button
         onClick={onScrollUp}
-        className="absolute top-6 left-1/2 transform -translate-x-1/2 z-40 text-white/90 hover:text-white backdrop-blur-xl bg-white/10 hover:bg-white/20 px-6 py-3 rounded-2xl border border-white/20 transition-all duration-300 shadow-2xl group"
-        whileHover={{ 
-          scale: 1.1, 
-          y: -2,
-          backgroundColor: "rgba(255,255,255,0.15)",
-          boxShadow: "0 15px 30px rgba(255,255,255,0.2)" 
-        }}
-        whileTap={{ scale: 0.95 }}
-        initial={{ opacity: 0, y: -30 }}
+        className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 text-white/85 hover:text-white backdrop-blur-md bg-white/20 hover:bg-white/30 px-5 py-2 rounded-full border border-white/25 transition-all duration-300"
+        whileHover={{ scale: 1.15 }}
+        whileTap={{ scale: 0.9 }}
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+        transition={{ delay: 0.3 }}
         aria-label="Scroll up to AirMax section"
       >
-        <div className="flex items-center gap-3">
-          <motion.div
-            animate={{ y: [0, -2, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <ArrowUp className="w-5 h-5" aria-hidden="true" />
-          </motion.div>
-          <span className="text-sm font-semibold tracking-wide">Back to AirMax</span>
+        <div className="flex items-center gap-2">
+          <ArrowUp className="w-4 h-4" aria-hidden="true" />
+          <span className="text-xs font-medium">Back to AirMax</span>
         </div>
       </motion.button>
 
-      {/* Enhanced Animated Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ willChange: "transform" }}>
         <motion.div
-          initial={{ scale: 0, rotate: -45, opacity: 0 }}
-          animate={{ scale: 1.8, rotate: 180, opacity: 0.4 }}
-          transition={{ duration: 3, delay: 0.4, ease: "easeOut" }}
-          className="absolute -top-48 -right-48 w-96 h-96 bg-gradient-to-br from-white/40 to-white/10 rounded-full blur-3xl"
+          initial={{ scale: 0, rotate: 0 }}
+          animate={{ scale: 1, rotate: 180 }}
+          transition={{ duration: 2, delay: 0.5 }}
+          className="absolute -top-20 sm:-top-40 -right-20 sm:-right-40 w-40 h-40 sm:w-80 sm:h-80 bg-gradient-to-r from-white/20 to-white/10 rounded-full blur-2xl sm:blur-3xl"
         />
         <motion.div
-          initial={{ scale: 0, rotate: 135, opacity: 0 }}
-          animate={{ scale: 2, rotate: 0, opacity: 0.3 }}
-          transition={{ duration: 3, delay: 0.6, ease: "easeOut" }}
-          className="absolute -bottom-48 -left-48 w-96 h-96 bg-gradient-to-tl from-white/30 to-white/5 rounded-full blur-3xl"
-        />
-        
-        {/* Animated Grid */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.03 }}
-          transition={{ delay: 1 }}
-          className="absolute inset-0 bg-[linear-gradient(90deg,transparent_24px,white_25px),linear-gradient(transparent_24px,white_25px)] bg-[size:25px_25px]"
+          initial={{ scale: 0, rotate: 180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ duration: 2, delay: 0.7 }}
+          className="absolute -bottom-20 sm:-bottom-40 -left-20 sm:-left-40 w-40 h-40 sm:w-80 sm:h-80 bg-gradient-to-r from-white/10 to-white/20 rounded-full blur-2xl sm:blur-3xl"
         />
       </div>
 
@@ -300,101 +257,104 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
         variants={backgroundVariants}
         initial="hidden"
         animate="visible"
-        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        className="absolute inset-0 flex items-center justify-center"
       >
         <Image
           src="/logo.png"
           alt="Nike Swoosh background"
-          width={1200}
-          height={1200}
-          sizes="(max-width: 640px) 90vw, 800px"
-          className="object-contain w-[90%] sm:w-full max-w-[800px] opacity-20"
-          priority
+          width={1000}
+          height={1000}
+          sizes="(max-width: 640px) 80vw, 600px"
+          className="object-contain w-[80%] sm:w-full max-w-[600px] opacity-20"
         />
       </motion.div>
 
-      <div className="relative w-full max-w-8xl">
-        {/* Enhanced Shoe Container */}
+      <div className="relative w-full max-w-6xl">
+        {/* Shoe Container */}
         <motion.div
           variants={imageVariants}
           initial="normal"
           animate={
-            isAnimating && scrollDirection === "down" && activeSection === "shoecard"
+            isEnteringShoeCard
               ? "scrollDownEnter"
-              : isAnimating && scrollDirection === "up" && activeSection === "airmax"
+              : isExitingToAirmax
               ? "scrollUpExit"
               : "normal"
           }
           whileHover="hover"
-          onMouseMove={handleMouseMove}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          className="flex justify-center relative z-10 cursor-pointer mb-8 sm:mb-12 group"
-          style={{ perspective: "2000px", willChange: "transform, opacity, filter" }}
+          className="flex justify-center relative z-10 cursor-pointer mb-8 sm:mb-0"
+          tabIndex={0}
           onClick={handleImageClick}
+          onKeyDown={handleImageKeyDown}
           role="button"
           aria-label={`View ${currentProduct.name} details or scroll up`}
+          style={{ willChange: "transform, opacity, filter" }}
         >
-          {/* Enhanced Glow Effects */}
+          {/* Glow Effect */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-white/40 to-white/15 blur-3xl rounded-full"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 2.5, opacity: 0.5 }}
-            transition={{ duration: 2, delay: 0.5, ease: "easeOut" }}
-          />
-          
-          {/* Hover Glow */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/5 blur-2xl rounded-full"
-            animate={{ 
-              opacity: isHovered ? 0.3 : 0,
-              scale: isHovered ? 1.8 : 1.2
-            }}
-            transition={{ duration: 0.4 }}
+            className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/10 blur-xl rounded-full scale-110"
+            initial={{ scale: 0, opacity: 0.8 }}
+            animate={{ scale: 2, opacity: 0 }}
+            transition={{ duration: 1.2, delay: 0.3 }}
           />
 
-          {/* Zoom Indicator */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0, y: 10 }}
-            animate={{ 
-              opacity: isHovered ? 1 : 0, 
-              scale: isHovered ? 1 : 0.8,
-              y: isHovered ? 0 : 10
-            }}
-            transition={{ duration: 0.3 }}
-            className="absolute top-8 right-8 z-40 bg-black/60 text-white p-3 rounded-2xl backdrop-blur-xl border border-white/20 shadow-2xl"
-          >
-            <div className="flex items-center gap-2">
-              <ZoomIn className="w-5 h-5" />
-              <span className="text-sm font-medium">Click to zoom</span>
-            </div>
-          </motion.div>
-
-          {/* Shoe Image Container */}
-          <div className="relative w-full max-w-[70vw] h-[75vh] flex items-center justify-center">
+          <div className="relative w-full max-w-[clamp(300px,50vw,600px)] h-[600px] flex items-center justify-center">
             <Image
               src={imageSrc}
               alt={currentProduct.name}
-              width={isMobile ? 1400 : 2000}
-              height={isMobile ? 1050 : 1500}
-              sizes="70vw"
-              className="object-contain drop-shadow-2xl relative z-20 w-full max-h-[75vh]"
-              priority
-              onLoad={() => {
-                console.log("ShoeCard image loaded:", imageSrc);
-                setImagesLoaded(true);
-              }}
-              onError={() => {
-                console.log("ShoeCard image error:", imageSrc);
-                setImageError(true);
-              }}
+              width={800}
+              height={800}
+              sizes="(max-width: 640px) 80vw, (max-width: 1024px) 50vw, 600px"
+              className="object-contain drop-shadow-2xl relative z-20 w-full max-h-full"
+              onLoad={() => setImagesLoaded(true)}
+              onError={() => setImageError(true)}
             />
           </div>
 
-          {/* Enhanced Floating Particles */}
+          {/* Floating Feature Tags */}
+          <motion.div 
+            className="absolute inset-0 flex items-center justify-center" 
+            role="list"
+            variants={tagContainerVariants}
+            initial="hidden"
+            animate={isActive ? "visible" : "exit"}
+          >
+            {featureTags.map((tag, i) => (
+              <motion.div
+                key={i}
+                custom={tag}
+                variants={tagVariants}
+                initial="hidden"
+                animate={isActive ? "visible" : "exit"}
+                whileHover="hover"
+                whileTap="tap"
+                className="absolute bg-white/90 backdrop-blur-sm border border-white/60 shadow-2xl px-3 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl text-sm font-medium flex items-center gap-2 cursor-pointer whitespace-nowrap z-30"
+                style={{ transformOrigin: "center center" }}
+                tabIndex={0}
+                role="listitem"
+                aria-label={tag.text}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.focus();
+                }}
+              >
+                <span className="text-lg sm:text-xl" aria-hidden="true">
+                  {tag.emoji}
+                </span>
+                <span className="text-gray-800 font-semibold">{tag.text}</span>
+                <motion.div
+                  initial={{ scaleX: 0, opacity: 0 }}
+                  animate={{ scaleX: 1, opacity: 0.4 }}
+                  transition={{ delay: tag.delay + 0.4, duration: 0.6 }}
+                  className="absolute w-8 sm:w-12 h-0.5 bg-gray-500 -left-8 sm:-left-12 top-1/2 transform -translate-y-1/2 origin-right"
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Floating Particles */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={{ opacity: isActive ? 1 : 0 }}
             transition={{ delay: 0.8 }}
             className="absolute inset-0 pointer-events-none"
           >
@@ -403,198 +363,47 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
                 key={i}
                 initial={{ scale: 0, x: 0, y: 0, opacity: 0 }}
                 animate={{ 
-                  scale: [0, pos.size * 0.4, 0], 
-                  x: pos.x, 
-                  y: pos.y, 
-                  opacity: [0, 0.8, 0],
-                  rotate: [0, 180, 360]
+                  scale: isActive ? 1 : 0, 
+                  x: isActive ? pos.x : 0, 
+                  y: isActive ? pos.y : 0, 
+                  opacity: isActive ? 0.6 : 0 
                 }}
-                transition={{ 
-                  duration: pos.duration, 
-                  delay: pos.delay,
-                  repeat: Infinity,
-                  repeatDelay: Math.random() * 2,
-                  ease: "easeInOut"
-                }}
-                className="absolute bg-white/80 rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 backdrop-blur-sm"
-                style={{ width: pos.size, height: pos.size }}
+                transition={{ duration: 1.5, delay: isActive ? pos.delay : 0 }}
+                className="absolute w-1 h-1 bg-white rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
               />
             ))}
           </motion.div>
-
-          {/* Sparkle Effects */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isHovered ? 1 : 0 }}
-            transition={{ duration: 0.3 }}
-            className="absolute inset-0 pointer-events-none"
-          >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="absolute left-1/4 top-1/4"
-            >
-              <Sparkles className="w-6 h-6 text-white/40" />
-            </motion.div>
-            <motion.div
-              animate={{ rotate: -360 }}
-              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-              className="absolute right-1/4 bottom-1/4"
-            >
-              <Sparkles className="w-4 h-4 text-white/30" />
-            </motion.div>
-          </motion.div>
         </motion.div>
 
-        {/* MOBILE: Feature Tags Below Image */}
-        {isMobile && (
-          <motion.div 
-            className="relative w-full h-48 flex items-center justify-center mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-          >
-            {featureTags.map((tag, index) => (
-              <motion.div
-                key={index}
-                custom={tag}
-                variants={tagVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="hover"
-                whileTap="tap"
-                className="absolute bg-white/95 backdrop-blur-xl border border-white/80 shadow-2xl px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 cursor-pointer whitespace-nowrap pointer-events-auto group/tag z-30"
-                style={{ 
-                  transform: 'translate(-50%, -50%)',
-                }}
-              >
-                <motion.span 
-                  className="text-xl"
-                  whileHover={{ scale: 1.2, rotate: 10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {tag.emoji}
-                </motion.span>
-                <span className="text-gray-900 font-bold tracking-wide bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  {tag.text}
-                </span>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-
-        {/* DESKTOP: Feature Tags Around Image */}
-        {!isMobile && (
-          <div className="absolute inset-0 pointer-events-none">
-            {featureTags.map((tag, index) => (
-              <motion.div
-                key={index}
-                custom={tag}
-                variants={tagVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="hover"
-                whileTap="tap"
-                className="absolute left-1/2 top-1/2 bg-white/95 backdrop-blur-xl border border-white/80 shadow-2xl px-5 py-4 rounded-2xl text-base font-semibold flex items-center gap-3 cursor-pointer whitespace-nowrap pointer-events-auto group/tag z-30"
-                style={{ 
-                  transform: 'translate(-50%, -50%)',
-                }}
-              >
-                <motion.span 
-                  className="text-2xl"
-                  whileHover={{ scale: 1.2, rotate: 10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {tag.emoji}
-                </motion.span>
-                <span className="text-gray-900 font-bold tracking-wide bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  {tag.text}
-                </span>
-                
-                {/* Animated connector line */}
-                <motion.div
-                  initial={{ scaleX: 0, opacity: 0 }}
-                  animate={{ scaleX: 1, opacity: 0.6 }}
-                  transition={{ delay: tag.delay + 0.8, duration: 0.8 }}
-                  className={`absolute h-0.5 bg-gradient-to-r from-gray-600 to-transparent ${
-                    tag.finalX < 0 ? 'left-full ml-4' : 'right-full mr-4'
-                  } w-12 top-1/2 transform -translate-y-1/2 ${
-                    tag.finalX < 0 ? 'origin-left' : 'origin-right'
-                  }`}
-                />
-              </motion.div>
-            ))}
-          </div>
-        )}
-
-        {/* Enhanced Heading and CTA */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-6 sm:gap-8 mt-8 sm:mt-12">
+        {/* Heading and CTA */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0 mt-4 sm:mt-10">
           <motion.button
-            initial={{ y: 80, opacity: 0, scale: 0.8 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            transition={{ 
-              delay: 1.8, 
-              duration: 1, 
-              type: "spring", 
-              stiffness: 80, 
-              damping: 10 
-            }}
-            whileHover={{ 
-              scale: 1.08, 
-              y: -2,
-              boxShadow: "0 20px 40px rgba(255,255,255,0.3)" 
-            }}
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: isActive ? 1 : 0 }}
+            transition={{ delay: 1.5 }}
+            whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(255,255,255,0.3)" }}
             whileTap={{ scale: 0.95 }}
-            className="w-full sm:w-auto bg-white text-gray-900 px-8 sm:px-10 py-4 sm:py-5 rounded-2xl font-bold text-lg sm:text-xl shadow-2xl hover:bg-gray-50 transition-all duration-300 group/cta relative overflow-hidden"
+            className="w-full sm:w-auto bg-white text-gray-900 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg shadow-xl text-center hover:bg-gray-100 transition-all duration-300"
+            onClick={() => {/* Add collection navigation logic */ }}
+            aria-label="Explore the collection"
           >
-            {/* Button shine effect */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12"
-              initial={{ x: "-100%" }}
-              whileHover={{ x: "100%" }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
-            />
-            <span className="flex items-center gap-3 group-hover/cta:gap-4 transition-all duration-300 relative z-10">
-              Explore Collection
-              <motion.span
-                animate={{ x: [0, 4, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              >
-                →
-              </motion.span>
-            </span>
+            Explore Collection →
           </motion.button>
 
           <motion.div
             initial={{ x: 100, opacity: 0, scale: 0.9 }}
-            animate={{ x: 0, opacity: 1, scale: 1 }}
-            transition={{ 
-              duration: 1.2, 
-              delay: 1.2, 
-              type: "spring", 
-              stiffness: 80, 
-              damping: 10 
-            }}
+            animate={{ x: 0, opacity: isActive ? 1 : 0, scale: isActive ? 1 : 0.9 }}
+            transition={{ duration: 1, delay: 0.8, type: "spring" }}
             className="text-center sm:text-right w-full sm:w-auto"
           >
-            <h1 className="text-3xl font-black text-white leading-tight tracking-tight">
-              <motion.span
-                initial={{ backgroundPosition: "200% 0" }}
-                animate={{ backgroundPosition: "-200% 0" }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent bg-[length:200%_auto]"
-              >
-                Premium
-              </motion.span>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight">
+              <span className="bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                Quality
+              </span>
               <br />
-              <motion.span
-                initial={{ backgroundPosition: "-200% 0" }}
-                animate={{ backgroundPosition: "200% 0" }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent bg-[length:200%_auto]"
-              >
-                Performance
-              </motion.span>
+              <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                that speaks.
+              </span>
             </h1>
           </motion.div>
         </div>
