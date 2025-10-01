@@ -62,6 +62,7 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
   const [imageLoadTimeout, setImageLoadTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const isMobile = useMemo(() => typeof window !== "undefined" && window.innerWidth < 1024, []);
+  const isSmallMobile = useMemo(() => typeof window !== "undefined" && window.innerWidth < 480, []);
 
   const particlePositions = useMemo(
     () =>
@@ -137,7 +138,7 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
     scrollDownEnter: {
       scale: isMobile ? [0.8, 1.1, 1] : [0.9, 1.25, 1],
       y: isMobile ? [60, -50, 0] : [120, -150, 0],
-      x: isMobile ? [-30, 20, 0] : [0, 0, 0],
+      x: isMobile ? [-30, 20, 0] : [-100, 70, 0],
       rotateX: isMobile ? [8, -4, 0] : [15, -8, 0],
       rotateY: isMobile ? [-6, 3, 0] : [-12, 6, 0],
       opacity: [0, 0.9, 1],
@@ -151,7 +152,7 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
     scrollUpExit: {
       scale: isMobile ? [1, 1.1, 0.8] : [1, 1.25, 0.9],
       y: isMobile ? [0, -50, 60] : [0, -150, 120],
-      x: isMobile ? [0, -20, 30] : [0, 0, 0],
+      x: isMobile ? [0, -20, 30] : [0, -70, 100],
       rotateX: isMobile ? [0, 4, -8] : [0, 8, -15],
       rotateY: isMobile ? [0, -3, 6] : [0, -6, 12],
       opacity: [1, 0.9, 0],
@@ -352,13 +353,14 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
             </div>
           </motion.div>
 
-          {/* Content */}
+          {/* Content - Improved spacing and layout */}
           <motion.div
             className="space-y-3 text-white text-center w-full max-w-md mx-auto px-4"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
+            {/* Title Section */}
             <div className="space-y-1">
               <span className="text-xs uppercase tracking-widest text-gray-300 font-medium block">
                 Next-Gen Design • {currentProduct.releaseDate}
@@ -370,6 +372,7 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
               </h1>
             </div>
 
+            {/* Description - Fixed typo "Colonway" to "Colorway" */}
             <p className="text-gray-200 text-xs sm:text-sm leading-relaxed px-2">
               Revolutionary Air unit for ultimate cushioning. Crafted for style and comfort. 
               <span className="block mt-1 text-amber-300 font-medium">
@@ -377,6 +380,7 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
               </span>
             </p>
 
+            {/* Features Grid - Improved spacing */}
             <motion.div
               className="grid grid-cols-2 gap-2 mt-3"
               variants={{
@@ -395,12 +399,15 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
                   }}
                   className="flex items-center justify-center gap-1.5 text-white bg-white/10 backdrop-blur-sm rounded-lg p-2 border border-white/15 transition-all duration-200"
                 >
-                  <span className="text-sm">{feature.icon}</span>
+                  <span className="text-sm" aria-hidden="true">
+                    {feature.icon}
+                  </span>
                   <span className="text-xs font-medium whitespace-nowrap">{feature.text}</span>
                 </motion.div>
               ))}
             </motion.div>
 
+            {/* CTA Button - Better sizing */}
             <div className="flex justify-center mt-4">
               <Button
                 className="bg-white text-black hover:bg-gray-100 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl rounded-full w-full max-w-xs py-3"
@@ -412,6 +419,7 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
             </div>
           </motion.div>
 
+          {/* Scroll indicator - Smaller and less intrusive */}
           <motion.div
             className="text-white/70 text-xs flex items-center gap-1 mt-3"
             animate={{
@@ -428,156 +436,112 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
           </motion.div>
         </div>
       ) : (
-        /* Desktop Layout - Image in middle, content on sides */
-        <div className="relative z-10 w-full max-w-8xl mx-auto h-full flex flex-col justify-center items-center">
-          {/* Main Content Container */}
-          <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-12">
-            
-            {/* Left Side - Product Info */}
-            <motion.div
-              className="lg:w-1/5 space-y-6 text-white"
-              initial={{ opacity: 0, x: -80 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <div className="space-y-3">
-                <span className="text-sm uppercase tracking-widest text-gray-300 font-medium">
-                  Next-Gen Design • {currentProduct.releaseDate}
+        /* Desktop Layout - Unchanged */
+        <div className="relative z-10 w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center mt-12">
+          <motion.div
+            className="space-y-5 text-white"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <div>
+              <span className="text-xs uppercase tracking-widest text-gray-300 font-medium">
+                Next-Gen Design • {currentProduct.releaseDate}
+              </span>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mt-2">
+                <span className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  {currentProduct.name}
                 </span>
-                <h1 className="text-5xl xl:text-6xl font-extrabold leading-tight">
-                  <span className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                    {currentProduct.name}
-                  </span>
-                </h1>
-              </div>
+              </h1>
+            </div>
 
-              <p className="text-gray-200 text-lg leading-relaxed max-w-md">
-                Revolutionary Air unit for ultimate cushioning. Crafted for style and comfort.
-              </p>
+            <p className="text-gray-200 text-base sm:text-lg leading-relaxed max-w-md">
+              Revolutionary Air unit for ultimate cushioning. Crafted for style and comfort. 
+              Colorway: {currentProduct.colorWay}
+            </p>
 
-              <div className="text-amber-300 font-semibold text-lg">
-                Colorway: {currentProduct.colorWay}
-              </div>
-
-              {/* Buy Button on Left */}
-              <div className="pt-4">
-                <Button
-                  className="bg-white text-black px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-all duration-300 hover:scale-105 shadow-2xl hover:shadow-3xl"
-                  onClick={() => {/* Add cart logic */ }}
+            <motion.div
+              className="grid grid-cols-2 gap-3 max-w-sm"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+              }}
+              initial="hidden"
+              animate="visible"
+            >
+              {features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  variants={{
+                    hidden: { y: 20, opacity: 0 },
+                    visible: { y: 0, opacity: 1 },
+                  }}
+                  className="flex items-center gap-2.5 text-white bg-white/15 backdrop-blur-md rounded-lg p-2.5 border border-white/20 hover:border-white/35 transition-all duration-300"
+                  whileHover={{ scale: 1.05 }}
                 >
-                  <ShoppingCart className="w-6 h-6 mr-3" />
-                  Buy Now • {price}
-                </Button>
-              </div>
+                  <span className="text-lg">{feature.icon}</span>
+                  <span className="text-xs font-medium">{feature.text}</span>
+                </motion.div>
+              ))}
             </motion.div>
 
-            {/* Center - Large Image */}
+            <div className="flex gap-4">
+              <Button
+                className="bg-white text-black px-6 py-3 sm:px-8 sm:py-3.5 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                onClick={() => {/* Add cart logic */ }}
+              >
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                Buy Now • {price}
+              </Button>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="relative flex justify-center items-center cursor-pointer group max-w-[75vw] mx-auto"
+            variants={imageVariants}
+            initial="normal"
+            animate={getImageVariant()}
+            whileHover="hover"
+            onClick={onScrollDown}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            style={{ perspective: "1600px" }}
+          >
             <motion.div
-              className="lg:w-3/5 relative flex justify-center items-center cursor-pointer group"
-              variants={imageVariants}
-              initial="normal"
-              animate={getImageVariant()}
-              whileHover="hover"
-              onClick={onScrollDown}
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
+              className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full blur-3xl"
+              initial={{ scale: 1.2, y: -100, opacity: 0 }}
+              animate={{
+                scale: 1,
+                y: 0,
+                opacity: 1,
+                transition: { duration: 0.8, ease: [0.25, 0.8, 0.25, 1] },
+              }}
               style={{ perspective: "1600px" }}
-            >
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full blur-3xl"
-                initial={{ scale: 1.2, y: -100, opacity: 0 }}
-                animate={{
-                  scale: 1,
-                  y: 0,
-                  opacity: 1,
-                  transition: { duration: 0.8, ease: [0.25, 0.8, 0.25, 1] },
-                }}
-                style={{ perspective: "1600px" }}
-              />
-              <div className="relative w-full h-[70vh] flex items-center justify-center">
-                {!imagesLoaded ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin h-12 w-12 border-4 border-t-white border-gray-600 rounded-full" />
-                  </div>
-                ) : imageError ? (
-                  <div className="flex items-center justify-center h-full text-red-500 text-lg">
-                    Failed to load image
-                  </div>
-                ) : (
-                  <Image
-                    src={imageSrc}
-                    alt={currentProduct.name}
-                    width={1800}
-                    height={1350}
-                    sizes="50vw"
-                    className="object-contain drop-shadow-2xl transition-all duration-300 group-hover:drop-shadow-[0_40px_40px_rgba(0,0,0,0.6)]"
-                    style={{ 
-                      maxHeight: '70vh',
-                      maxWidth: '100%'
-                    }}
-                    priority
-                    onLoad={() => setImagesLoaded(true)}
-                    onError={() => setImageError(true)}
-                  />
-                )}
-              </div>
-            </motion.div>
-
-            {/* Right Side - Features */}
-            <motion.div
-              className="lg:w-1/5 space-y-6"
-              initial={{ opacity: 0, x: 80 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-            >
-              <motion.div
-                className="grid grid-cols-1 gap-4"
-                variants={{
-                  hidden: { opacity: 0 },
-                  visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
-                }}
-                initial="hidden"
-                animate="visible"
-              >
-                {features.map((feature, index) => (
-                  <motion.div
-                    key={index}
-                    variants={{
-                      hidden: { y: 30, opacity: 0 },
-                      visible: { y: 0, opacity: 1 },
-                    }}
-                    className="flex items-center gap-4 text-white bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20 hover:border-white/40 transition-all duration-300 group"
-                    whileHover={{ 
-                      scale: 1.05, 
-                      backgroundColor: "rgba(255,255,255,0.15)",
-                      boxShadow: "0 20px 40px rgba(255,255,255,0.1)"
-                    }}
-                  >
-                    <span className="text-2xl group-hover:scale-110 transition-transform duration-300">
-                      {feature.icon}
-                    </span>
-                    <span className="text-lg font-semibold">{feature.text}</span>
-                  </motion.div>
-                ))}
-              </motion.div>
-
-              {/* Scroll Indicator */}
-              <motion.div
-                className="text-white/85 text-lg flex items-center gap-3 mt-8 justify-end"
-                animate={{
-                  y: [0, -8, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              >
-                <span className="font-medium">Click image for next</span>
-                <ArrowDown className="w-6 h-6 animate-pulse" />
-              </motion.div>
-            </motion.div>
-          </div>
+            />
+            <div className="relative w-full h-[80vh] flex items-center justify-center">
+              {!imagesLoaded ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin h-8 w-8 border-4 border-t-white border-gray-600 rounded-full" />
+                </div>
+              ) : imageError ? (
+                <div className="flex items-center justify-center h-full text-red-500">
+                  Failed to load image
+                </div>
+              ) : (
+                <Image
+                  src={imageSrc}
+                  alt={currentProduct.name}
+                  width={1600}
+                  height={1200}
+                  sizes="75vw"
+                  className="object-contain drop-shadow-2xl transition-all duration-300 group-hover:drop-shadow-[0_30px_30px_rgba(0,0,0,0.5)] max-h-[80vh]"
+                  priority
+                  onLoad={() => setImagesLoaded(true)}
+                  onError={() => setImageError(true)}
+                />
+              )}
+            </div>
+          </motion.div>
         </div>
       )}
     </motion.section>

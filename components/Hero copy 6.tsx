@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -7,7 +6,7 @@ import HeroSection from "./HeroSection";
 import AirMaxSection from "./AirMaxSection";
 import ShoeCard from "./ShoeCard";
 
-type ProductColor = "black" | "red";
+type ProductColor = "black" | "red"; // Restrict until blue/green are added
 
 interface Product {
   name: string;
@@ -37,7 +36,7 @@ const Hero: React.FC = () => {
   const lastScrollY = useRef(0);
   const isScrolling = useRef(false);
 
-  const ANIMATION_DURATION = 500; // Synced with AirMaxSection, ShoeCard
+  const ANIMATION_DURATION = 700;
 
   const colorThemes: Record<ProductColor, ColorTheme> = {
     black: { bg: "#0a0a0a", gradient: "from-gray-900/90 to-gray-800/90", text: "text-white" },
@@ -47,7 +46,7 @@ const Hero: React.FC = () => {
   const productData: Record<ProductColor, Product> = {
     black: {
       name: "AIR MAX 270",
-      images: ["/images/jordan-blue.png", "/images/jordan-blue2.png"],
+       images: ["/images/jordan-blue.png", "/images/jordan-blue2.png"],
       releaseDate: "2016-10-06",
       colorWay: "SAIL/STARFISH-BLACK",
     },
@@ -92,6 +91,10 @@ const Hero: React.FC = () => {
       else if (activeSection === "airmax") targetSection = "hero";
     }
 
+    if (targetSection === "airmax" && showPreview) {
+      setShowPreview(false);
+    }
+
     setActiveSection(targetSection);
 
     const targetRef =
@@ -101,22 +104,13 @@ const Hero: React.FC = () => {
         ? airMaxRef
         : shoeCardRef;
 
-    const targetRect = targetRef.current?.getBoundingClientRect();
-    if (targetRect) {
-      window.scrollTo({
-        top: window.scrollY + targetRect.top,
-        behavior: "smooth",
-      });
-    }
-
     setTimeout(() => {
-      setIsAnimating(false);
-      isScrolling.current = false;
-      if (targetSection === "airmax") {
-        console.log("Closing modal after scroll to AirMaxSection");
-        setShowPreview(false); // Close modal after scroll completes
-      }
-    }, ANIMATION_DURATION);
+      targetRef?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(() => {
+        setIsAnimating(false);
+        isScrolling.current = false;
+      }, ANIMATION_DURATION);
+    }, 50);
   };
 
   useEffect(() => {
@@ -162,15 +156,14 @@ const Hero: React.FC = () => {
 
     window.addEventListener("scroll", throttledScroll);
     return () => window.removeEventListener("scroll", throttledScroll);
-  }, [activeSection, isAnimating]);
+  }, [activeSection, isAnimating, showPreview]);
 
   const handleHeroImageClick = () => {
-    console.log("Opening modal: showPreview = true");
     setShowPreview(true);
     setTimeout(() => {
-      console.log("Triggering scroll to AirMaxSection");
-      animateScroll("down"); // Delay scroll to allow modal to render
-    }, 100); // Short delay for modal visibility
+      animateScroll("down");
+      setShowPreview(false);
+    }, ANIMATION_DURATION);
   };
 
   return (
@@ -218,7 +211,6 @@ const Hero: React.FC = () => {
           productImage={imageSrc}
           currentProduct={currentProduct}
           onScrollUp={() => animateScroll("up")}
-          setShowPreview={setShowPreview}
         />
       </div>
     </>

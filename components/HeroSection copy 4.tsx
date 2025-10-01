@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { Button } from "./ui/button";
 
-type ProductColor = "black" | "red";
+type ProductColor = "black" | "red"; // Add blue, green when implemented
 
 interface Product {
   name: string;
@@ -44,7 +44,7 @@ interface HeroSectionProps {
   showPreview: boolean;
 }
 
-const ANIMATION_DURATION = 700;
+const ANIMATION_DURATION = 700; // Match Hero component
 
 const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
   (
@@ -76,24 +76,11 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
     const [touchStart, setTouchStart] = useState(0);
     const [touchEnd, setTouchEnd] = useState(0);
     const [isNavClick, setIsNavClick] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
 
-    const swipeThreshold = isMobile ? 60 : 80;
+    const swipeThreshold = typeof window !== "undefined" && window.innerWidth < 640 ? 60 : 80;
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
 
-    const imageSrc = imageError || !currentProduct.images[currentImageIndex]
-      ? "/images/fallback-shoe.png"
-      : currentProduct.images[currentImageIndex];
-
-    useEffect(() => {
-      setIsMobile(typeof window !== "undefined" && window.innerWidth < 1024);
-
-      const handleResize = () => {
-        setIsMobile(window.innerWidth < 1024);
-      };
-
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }, []);
+    const imageSrc = imageError ? "/images/fallback-shoe.png" : currentProduct.images[currentImageIndex] || "";
 
     useEffect(() => {
       const handleKeyPress = (e: KeyboardEvent) => {
@@ -116,54 +103,15 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
 
     useEffect(() => {
       const preloadImages = () => {
-        if (!currentProduct.images.length) {
-          console.log("No images to preload for", currentProduct.name);
-          setImageError(true);
-          return;
-        }
-
         setImagesLoaded(false);
         setImageError(false);
-        let loadedCount = 0;
-        const totalImages = currentProduct.images.length;
-
-        const timeout = setTimeout(() => {
-          console.log("Image preload timeout for", currentProduct.name);
-          setImageError(true);
-          setImagesLoaded(false);
-        }, 10000);
+        const timeout = setTimeout(() => setImageError(true), 10000);
         setImageLoadTimeout(timeout);
 
         currentProduct.images.forEach((src: string) => {
-          if (!src) {
-            console.log("Invalid image source:", src);
-            loadedCount++;
-            if (loadedCount === totalImages) {
-              setImagesLoaded(true);
-              clearTimeout(timeout);
-            }
-            return;
-          }
-
           const img = new window.Image();
           img.src = src;
-          img.onload = () => {
-            console.log("Preloaded image:", src);
-            loadedCount++;
-            if (loadedCount === totalImages) {
-              setImagesLoaded(true);
-              clearTimeout(timeout);
-            }
-          };
-          img.onerror = () => {
-            console.log("Error preloading image:", src);
-            loadedCount++;
-            if (loadedCount === totalImages) {
-              setImagesLoaded(true);
-              setImageError(true);
-              clearTimeout(timeout);
-            }
-          };
+          img.onload = () => clearTimeout(timeout);
         });
       };
 
@@ -219,10 +167,10 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
 
     const scrollImageVariants = {
       zoomIntro: {
-        scale: isMobile ? [1.5, 1.2, 1] : [1.6, 1.2, 1],
-        y: isMobile ? [20, -10, 0] : [40, -20, 0],
-        rotateX: isMobile ? [8, -4, 0] : [12, -6, 0],
-        rotateY: isMobile ? [-6, 3, 0] : [-10, 5, 0],
+        scale: isMobile ? [1.5, 1.2, 1] : [1.8, 1.3, 1],
+        y: isMobile ? [30, -20, 0] : [50, -30, 0],
+        rotateX: isMobile ? [10, -5, 0] : [15, -8, 0],
+        rotateY: isMobile ? [-8, 4, 0] : [-12, 6, 0],
         opacity: [0, 1, 1],
         transition: {
           duration: ANIMATION_DURATION / 1000 * (isMobile ? 1.2 : 1.6),
@@ -231,14 +179,14 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
         },
       },
       scrollDown: {
-        scale: isMobile ? [1, 1.1, 0.9] : [1, 1.3, 0.9],
-        y: isMobile ? [0, -80, 60] : [0, -150, 120],
-        x: isMobile ? [0, 30, -50] : [0, 60, -100],
-        rotate: isMobile ? [0, -8, 4] : [0, -12, 8],
+        scale: isMobile ? [1, 1.2, 0.9] : [1, 1.4, 0.9],
+        y: isMobile ? [0, -100, 80] : [0, -200, 150],
+        x: isMobile ? [0, 40, -60] : [0, 80, -120],
+        rotate: isMobile ? [0, -10, 5] : [0, -15, 10],
         opacity: [1, 0.95, 0],
         filter: isMobile
           ? ["blur(0px)", "blur(1px)", "blur(2px)"]
-          : ["blur(0px) brightness(1)", "blur(2px) brightness(1.2)", "blur(3px) brightness(0.8)"],
+          : ["blur(0px) brightness(1)", "blur(2px) brightness(1.3)", "blur(3px) brightness(0.7)"],
         transition: {
           duration: ANIMATION_DURATION / 1000,
           times: [0, 0.5, 1],
@@ -246,14 +194,14 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
         },
       },
       scrollUp: {
-        scale: isMobile ? [0.9, 1.1, 1] : [0.9, 1.3, 1],
-        y: isMobile ? [60, -80, 0] : [120, -150, 0],
-        x: isMobile ? [-50, 30, 0] : [-100, 60, 0],
-        rotate: isMobile ? [4, -8, 0] : [8, -12, 0],
+        scale: isMobile ? [0.9, 1.2, 1] : [0.9, 1.4, 1],
+        y: isMobile ? [80, -100, 0] : [150, -200, 0],
+        x: isMobile ? [-60, 40, 0] : [-120, 80, 0],
+        rotate: isMobile ? [5, -10, 0] : [10, -15, 0],
         opacity: [0, 0.95, 1],
         filter: isMobile
           ? ["blur(2px)", "blur(1px)", "blur(0px)"]
-          : ["blur(3px) brightness(0.8)", "blur(2px) brightness(1.2)", "blur(0px) brightness(1)"],
+          : ["blur(3px) brightness(0.7)", "blur(2px) brightness(1.3)", "blur(0px) brightness(1)"],
         transition: {
           duration: ANIMATION_DURATION / 1000,
           times: [0, 0.5, 1],
@@ -293,7 +241,6 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
     const imageAnimation = getImageAnimation();
 
     const handleImageClick = () => {
-      console.log("Image clicked, showPreview:", showPreview);
       onImageClick();
       setTimeout(() => onScrollDown(), ANIMATION_DURATION);
     };
@@ -378,7 +325,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                     <ChevronLeft className="h-6 w-6" />
                   </Button>
 
-                  <div className="relative w-full max-w-[90vw]">
+                  <div className="relative w-full max-w-[360px] sm:max-w-[400px]">
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={`${selectedProduct}-${currentImageIndex}`}
@@ -398,13 +345,13 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                         onClick={handleImageClick}
                       >
                         {imageError ? (
-                          <div className="flex flex-col items-center justify-center h-[80vh] text-red-500">
+                          <div className="flex flex-col items-center justify-center h-[320px] sm:h-[350px] text-red-500">
                             <p>Failed to load image</p>
                             <Button
                               variant="outline"
                               onClick={() => {
                                 setImageError(false);
-                                setImagesLoaded(false);
+                                // Re-trigger preload
                                 const timeout = setTimeout(() => setImageError(true), 10000);
                                 setImageLoadTimeout(timeout);
                                 currentProduct.images.forEach((src: string) => {
@@ -418,26 +365,20 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                             </Button>
                           </div>
                         ) : !imagesLoaded ? (
-                          <div className="flex items-center justify-center h-[80vh]">
+                          <div className="flex items-center justify-center h-[320px] sm:h-[350px]">
                             <div className="animate-spin h-8 w-8 border-4 border-t-white border-gray-600 rounded-full" />
                           </div>
                         ) : (
                           <Image
                             src={imageSrc}
                             alt={currentProduct.name}
-                            width={600}
-                            height={500}
-                            sizes="90vw"
-                            className="object-contain w-full h-auto max-h-[80vh]"
+                            width={400}
+                            height={350}
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            className="object-contain w-full h-auto"
                             priority
-                            onLoad={() => {
-                              console.log("Main image loaded:", imageSrc);
-                              setImagesLoaded(true);
-                            }}
-                            onError={() => {
-                              console.log("Main image error:", imageSrc);
-                              setImageError(true);
-                            }}
+                            onLoad={() => setImagesLoaded(true)}
+                            onError={() => setImageError(true)}
                           />
                         )}
                       </motion.div>
@@ -563,7 +504,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                   </motion.h1>
                 </motion.div>
 
-                <div className="relative flex-1 flex justify-center items-center overflow-hidden max-w-[90vw] mx-auto">
+                <div className="relative flex-1 flex justify-center items-center overflow-hidden max-w-[800px] mx-auto">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -571,12 +512,12 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                       setIsNavClick(true);
                       onPrevImage();
                     }}
-                    className="absolute left-2 z-20 text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-12 w-12 transition-all hover:scale-110"
+                    className="text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-12 w-12 transition-all hover:scale-110"
                     aria-label="Previous image"
                   >
                     <ChevronLeft className="h-6 w-6" />
                   </Button>
-                  <div className="relative w-full max-w-[90vw] h-[80vh] flex justify-center items-center" style={{ perspective: "1500px" }}>
+                  <div className="relative w-full max-w-[800px] h-[440px] flex justify-center items-center" style={{ perspective: "1500px" }}>
                     <AnimatePresence mode={isNavClick ? "sync" : "wait"}>
                       <motion.div
                         key={`${selectedProduct}-${currentImageIndex}`}
@@ -594,13 +535,12 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                         onClick={handleImageClick}
                       >
                         {imageError ? (
-                          <div className="flex flex-col items-center justify-center h-[80vh] text-red-500">
+                          <div className="flex flex-col items-center justify-center h-[440px] text-red-500">
                             <p>Failed to load image</p>
                             <Button
                               variant="outline"
                               onClick={() => {
                                 setImageError(false);
-                                setImagesLoaded(false);
                                 const timeout = setTimeout(() => setImageError(true), 10000);
                                 setImageLoadTimeout(timeout);
                                 currentProduct.images.forEach((src: string) => {
@@ -614,26 +554,20 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                             </Button>
                           </div>
                         ) : !imagesLoaded ? (
-                          <div className="flex items-center justify-center h-[80vh]">
+                          <div className="flex items-center justify-center h-[440px]">
                             <div className="animate-spin h-8 w-8 border-4 border-t-white border-gray-600 rounded-full" />
                           </div>
                         ) : (
                           <Image
                             src={imageSrc}
                             alt={currentProduct.name}
-                            width={1600}
-                            height={1200}
-                            sizes="90vw"
-                            className="object-contain w-full h-auto max-h-[80vh] cursor-pointer"
+                            width={800}
+                            height={700}
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            className="object-contain w-full h-auto max-h-[700px] sm:max-h-[600px] md:max-h-[700px] cursor-pointer"
                             priority
-                            onLoad={() => {
-                              console.log("Main image loaded:", imageSrc);
-                              setImagesLoaded(true);
-                            }}
-                            onError={() => {
-                              console.log("Main image error:", imageSrc);
-                              setImageError(true);
-                            }}
+                            onLoad={() => setImagesLoaded(true)}
+                            onError={() => setImageError(true)}
                           />
                         )}
                       </motion.div>
@@ -646,7 +580,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                       setIsNavClick(true);
                       onNextImage();
                     }}
-                    className="absolute right-2 z-20 text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-12 w-12 transition-all hover:scale-110"
+                    className="text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-12 w-12 transition-all hover:scale-110"
                     aria-label="Next image"
                   >
                     <ChevronRight className="h-6 w-6" />
@@ -692,21 +626,15 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
               </div>
 
               {/* Desktop Footer */}
-              <div className="hidden lg:flex flex-col lg:flex-row justify-between items-center mb-2 gap-6">
-                <motion.button
-                  className="relative flex items-center justify-center gap-3 w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-4 rounded-xl font-semibold text-base sm:text-lg text-white bg-gradient-to-r from-gray-900 to-gray-700 shadow-gray-900/25 border-0 hover:shadow-xl hover:shadow-purple-500/40 hover:from-purple-700 hover:to-blue-600 active:scale-95 transition-all duration-300 group overflow-hidden"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 1.1, duration: ANIMATION_DURATION / 1000 * 0.6 }}
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={onScrollDown}
-                  aria-label="Discover more about this product"
+              <div className="hidden lg:flex flex-col lg:flex-row justify-between items-center mt-8 gap-6">
+                <motion.span
+                  className="text-2xl font-light text-gray-200 font-playfair"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.9, duration: ANIMATION_DURATION / 1000 * 0.6 }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                  <ShoppingCart className="w-5 sm:w-6 h-5 sm:h-6 transition-transform group-hover:scale-110" />
-                  <span className="font-semibold tracking-wide">Add to cart</span>
-                </motion.button>
+                  {currentProduct.name}
+                </motion.span>
 
                 <motion.div
                   className="flex gap-2 items-center"
@@ -736,7 +664,20 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                   ))}
                 </motion.div>
 
-                <div></div>
+                <motion.button
+                  className="relative flex items-center justify-center gap-3 w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-4 rounded-xl font-semibold text-base sm:text-lg text-white bg-gradient-to-r from-gray-900 to-gray-700 shadow-gray-900/25 border-0 hover:shadow-xl hover:shadow-purple-500/40 hover:from-purple-700 hover:to-blue-600 active:scale-95 transition-all duration-300 group overflow-hidden"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 1.1, duration: ANIMATION_DURATION / 1000 * 0.6 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={onScrollDown}
+                  aria-label="Discover more about this product"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                  <ShoppingCart className="w-5 sm:w-6 h-5 sm:h-6 transition-transform group-hover:scale-110" />
+                  <span className="font-semibold tracking-wide">Discover More</span>
+                </motion.button>
               </div>
             </div>
           </div>
@@ -748,10 +689,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => {
-                console.log("Modal background clicked, closing");
-                onImageClick();
-              }}
+              onClick={() => onImageClick()}
               role="dialog"
               aria-modal="true"
               aria-label="Product image preview"
@@ -766,10 +704,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
               >
                 <button
                   className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2"
-                  onClick={() => {
-                    console.log("Close button clicked");
-                    onImageClick();
-                  }}
+                  onClick={() => onImageClick()}
                   aria-label="Close preview"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -782,9 +717,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                     <Button
                       variant="outline"
                       onClick={() => {
-                        console.log("Retry button clicked for modal image");
                         setImageError(false);
-                        setImagesLoaded(false);
                         const timeout = setTimeout(() => setImageError(true), 10000);
                         setImageLoadTimeout(timeout);
                         currentProduct.images.forEach((src: string) => {
@@ -805,22 +738,16 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                   <Image
                     src={imageSrc}
                     alt={currentProduct.name}
-                    width={1200}
+                    width={1200} // Increased for larger desktop display
                     height={1200}
-                    sizes={isMobile ? "100vw" : "75vw"}
+                    sizes={isMobile ? "100vw" : "75vw"} // 75% screen width on desktop
                     className={cn(
                       "object-contain",
                       isMobile ? "max-h-[90vh] w-auto" : "max-h-[90vh] max-w-[75vw] w-auto"
                     )}
                     priority
-                    onLoad={() => {
-                      console.log("Modal image loaded:", imageSrc);
-                      setImagesLoaded(true);
-                    }}
-                    onError={() => {
-                      console.log("Modal image error:", imageSrc);
-                      setImageError(true);
-                    }}
+                    onLoad={() => setImagesLoaded(true)}
+                    onError={() => setImageError(true)}
                   />
                 )}
               </motion.div>

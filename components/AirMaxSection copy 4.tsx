@@ -435,7 +435,7 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
             
             {/* Left Side - Product Info */}
             <motion.div
-              className="lg:w-1/5 space-y-6 text-white"
+              className="lg:w-1/3 space-y-6 text-white"
               initial={{ opacity: 0, x: -80 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
@@ -473,7 +473,7 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
 
             {/* Center - Large Image */}
             <motion.div
-              className="lg:w-3/5 relative flex justify-center items-center cursor-pointer group"
+              className="lg:w-1/3 relative flex justify-center items-center cursor-pointer group"
               variants={imageVariants}
               initial="normal"
               animate={getImageVariant()}
@@ -525,7 +525,7 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
 
             {/* Right Side - Features */}
             <motion.div
-              className="lg:w-1/5 space-y-6"
+              className="lg:w-1/3 space-y-6"
               initial={{ opacity: 0, x: 80 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
