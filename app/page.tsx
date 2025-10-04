@@ -6,6 +6,7 @@ import React from 'react'
 import { AnimatePresence } from "framer-motion";
 import ShoeCard from "@/components/ShoeCard";
 import PathAnimation from "@/components/PathAnimation";
+import Home from "@/components/Home";
 
 const HomePage = () => {
   const [showAirMax, setShowAirMax] = useState(false);
@@ -15,6 +16,7 @@ const HomePage = () => {
       {/* <ProductDetails/> */}
       {/* <ShoeCard/> */}
 
+{/* <Home/> */}
     </div>
   )
 }

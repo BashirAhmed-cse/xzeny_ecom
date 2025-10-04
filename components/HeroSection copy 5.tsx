@@ -1,7 +1,8 @@
-// src/components/HeroSection.tsx
-import React, { forwardRef } from "react";
+"use client";
+
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { forwardRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { Button } from "./ui/button";
@@ -68,14 +69,15 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
     },
     ref
   ) => {
-    const [imagesLoaded, setImagesLoaded] = React.useState(false);
-    const [imageError, setImageError] = React.useState(false);
-    const [ellipseError, setEllipseError] = React.useState(false);
-    const [imageLoadTimeout, setImageLoadTimeout] = React.useState<NodeJS.Timeout | null>(null);
-    const [touchStart, setTouchStart] = React.useState(0);
-    const [touchEnd, setTouchEnd] = React.useState(0);
-    const [isNavClick, setIsNavClick] = React.useState(false);
-    const [isMobile, setIsMobile] = React.useState(false);
+    const [imagesLoaded, setImagesLoaded] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    const [ellipseError, setEllipseError] = useState(false);
+    const [imageLoadTimeout, setImageLoadTimeout] =
+      useState<NodeJS.Timeout | null>(null);
+    const [touchStart, setTouchStart] = useState(0);
+    const [touchEnd, setTouchEnd] = useState(0);
+    const [isNavClick, setIsNavClick] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     const swipeThreshold = isMobile ? 60 : 80;
 
@@ -84,7 +86,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
         ? "/images/fallback-shoe.png"
         : currentProduct.images[currentImageIndex];
 
-    React.useEffect(() => {
+    useEffect(() => {
       setIsMobile(typeof window !== "undefined" && window.innerWidth < 1024);
 
       const handleResize = () => {
@@ -95,7 +97,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
       return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    React.useEffect(() => {
+    useEffect(() => {
       const handleKeyPress = (e: KeyboardEvent) => {
         if (e.key === "ArrowLeft") {
           setIsNavClick(true);
@@ -114,7 +116,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
       return () => window.removeEventListener("keydown", handleKeyPress);
     }, [onPrevImage, onNextImage, showPreview, onImageClick]);
 
-    React.useEffect(() => {
+    useEffect(() => {
       const preloadImages = () => {
         if (!currentProduct.images.length) {
           console.log("No images to preload for", currentProduct.name);
@@ -173,7 +175,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
       };
     }, [currentProduct]);
 
-    React.useEffect(() => {
+    useEffect(() => {
       if (showPreview) {
         const focusableElements = document.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -205,28 +207,29 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
       }
     };
 
+    // Updated image variants - slower and smoother entry from right side
     const imageVariants = {
       initial: { 
-        x: "100vw",
+        x: "100%", // Start from right side (off-screen)
         opacity: 0, 
         scale: 0.9,
-        rotateY: -15
+        rotateY: -15 // Slight 3D rotation for depth
       },
       animate: { 
-        x: 0,
+        x: 0, // Move to center
         opacity: 1, 
         scale: 1,
         rotateY: 0,
         transition: {
-          duration: (ANIMATION_DURATION / 1000) * 1.8,
-          ease: "easeInOut",
+          duration: (ANIMATION_DURATION / 1000) * 1.8, // Slower overall duration for smooth entry
+          ease: "easeInOut", // Smoother easing
           x: {
-            duration: (ANIMATION_DURATION / 1000) * 1.5,
-            ease: [0.25, 0.46, 0.45, 0.94]
+            duration: (ANIMATION_DURATION / 1000) * 1.5, // Slower x movement
+            ease: [0.25, 0.46, 0.45, 0.94] // Custom smooth cubic-bezier for fluid slide
           },
           scale: {
-            duration: (ANIMATION_DURATION / 1000) * 1.2,
-            ease: [0.34, 0.16, 0.7, 1.44]
+            duration: (ANIMATION_DURATION / 1000) * 1.2, // Slower scale
+            ease: [0.34, 0.16, 0.7, 1.44] // Gentle bounce-out for scale
           },
           opacity: {
             duration: (ANIMATION_DURATION / 1000) * 1.0,
@@ -235,7 +238,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
         }
       },
       exit: { 
-        x: "-100vw",
+        x: "-100%", // Exit to left side
         opacity: 0, 
         scale: 0.9,
         rotateY: 15,
@@ -246,32 +249,64 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
       },
     };
 
-    const navImageVariants = {
-      initial: {
-        opacity: 0,
-        scale: 0.6,
-        rotate: -10,
-        filter: "blur(4px)",
+    // Preview placeholder variants (animated without image)
+    const previewPlaceholderVariants = {
+      initial: { 
+        opacity: 0, 
+        scale: 0.8,
+        rotateY: -10 
       },
-      animate: {
-        opacity: 1,
+      animate: { 
+        opacity: 1, 
         scale: 1,
-        rotate: 0,
-        filter: "blur(0px)",
-        transition: {
-          duration: (ANIMATION_DURATION / 1000) * 0.9,
-          ease: [0.22, 1, 0.36, 1],
-        },
-      },
-      exit: {
-        opacity: 0,
-        scale: 0.3,
-        rotate: 10,
-        filter: "blur(6px)",
+        rotateY: 0,
         transition: {
           duration: (ANIMATION_DURATION / 1000) * 0.8,
-          ease: [0.55, 0.06, 0.68, 0.19],
-        },
+          ease: [0.25, 0.8, 0.25, 1],
+        }
+      },
+      exit: { 
+        opacity: 0, 
+        scale: 0.8,
+        rotateY: 10,
+        transition: {
+          duration: (ANIMATION_DURATION / 1000) * 0.4,
+          ease: [0.4, 0, 0.2, 1]
+        }
+      },
+    };
+
+    // Updated navImageVariants with zoom out/zoom in effect
+    const navImageVariants = {
+      initial: { 
+        opacity: 0, 
+        scale: 1.2, // Zoomed out
+        x: isNavClick ? 200 : 0,
+        rotateY: 90 
+      },
+      animate: { 
+        opacity: 1, 
+        scale: 1, // Normal scale
+        x: 0, 
+        rotateY: 0,
+        transition: {
+          duration: (ANIMATION_DURATION / 1000) * 0.7,
+          ease: [0.4, 0, 0.2, 1],
+          scale: {
+            duration: (ANIMATION_DURATION / 1000) * 0.5,
+            ease: [0.34, 1.56, 0.64, 1],
+          }
+        }
+      },
+      exit: { 
+        opacity: 0, 
+        scale: 0.8, // Zoom in when exiting
+        x: isNavClick ? -200 : 0,
+        rotateY: -90,
+        transition: {
+          duration: (ANIMATION_DURATION / 1000) * 0.6,
+          ease: [0.4, 0, 0.2, 1]
+        }
       },
     };
 
@@ -371,7 +406,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                 },
               }
             : {
-                duration: (ANIMATION_DURATION / 1000) * 1.8,
+                duration: (ANIMATION_DURATION / 1000) * 1.8, // Match the slower image entry
                 ease: "easeInOut",
                 x: {
                   duration: (ANIMATION_DURATION / 1000) * 1.5,
@@ -406,12 +441,12 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
           }}
           style={{ backgroundColor: currentColorTheme.bg }}
         >
-          <div className="relative z-10 w-full max-w-7xl mx-auto mt-10 sm:mt-12 lg:mt-16">
+          <div className="relative z-10 w-full max-w-7xl mx-auto mt-10 sm:mt-12 lg:mt-14">
             <div className="w-full">
-              {/* Desktop Layout */}
-              <div className="hidden lg:flex flex-col-reverse lg:flex-row items-center justify-center gap-8 lg:gap-12 relative mt-10">
+              {/* Desktop: Original Layout */}
+              <div className="hidden lg:flex flex-col-reverse lg:flex-row items-center justify-center gap-6 relative mt-10">
                 <motion.div
-                  className="flex flex-col gap-6 items-start self-start lg:min-w-[300px]"
+                  className="flex flex-col gap-6 items-start self-start"
                   initial={{ y: 80, opacity: 0, filter: "blur(10px)" }}
                   animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
                   transition={{
@@ -421,7 +456,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                   }}
                 >
                   <motion.h1
-                    className="text-3xl font-light leading-tight tracking-tight"
+                    className="text-4xl font-light leading-tight"
                     initial={{ y: 30, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     whileHover={{ scale: 1.02 }}
@@ -443,7 +478,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                       Wear your Style
                     </motion.span>
                     <motion.span
-                      className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold mt-2"
+                      className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{
@@ -454,59 +489,42 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                       with comfort.
                     </motion.span>
                   </motion.h1>
-                  <motion.button
-                    className="relative flex items-center justify-center gap-3 w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-4 rounded-xl font-semibold text-base sm:text-lg text-white bg-gradient-to-r from-gray-900 to-gray-700 shadow-gray-900/25 border-0 hover:shadow-xl hover:shadow-purple-500/40 hover:from-purple-700 hover:to-blue-600 active:scale-95 transition-all duration-300 group overflow-hidden mt-6"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{
-                      delay: 1.1,
-                      duration: (ANIMATION_DURATION / 1000) * 0.6,
-                    }}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={onScrollDown}
-                    aria-label="Discover more about this product"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                    <ShoppingCart className="w-5 sm:w-6 h-5 sm:h-6 transition-transform group-hover:scale-110" />
-                    <span className="font-semibold tracking-wide">
-                      Add to cart
-                    </span>
-                  </motion.button>
                 </motion.div>
+
                 <div className="relative flex-1 flex justify-center items-center overflow-hidden max-w-[90vw] mx-auto">
-                  <div
-                    className="relative w-full h-[70vh] flex justify-center items-center overflow-visible"
-                    style={{ 
-                      perspective: "1500px",
-                      width: "100vw",
-                      position: "relative",
-                      left: "50%",
-                      transform: "translateX(-50%)"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setIsNavClick(true);
+                      onPrevImage();
                     }}
+                    className="absolute left-2 z-20 text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-12 w-12 transition-all hover:scale-110"
+                    aria-label="Previous image"
                   >
-                    <AnimatePresence mode="sync">
+                    <ChevronLeft className="h-6 w-6" />
+                  </Button>
+                  <div
+                    className="relative w-full max-w-[90vw] h-[80vh] flex justify-center items-center"
+                    style={{ perspective: "1500px" }}
+                  >
+                    <AnimatePresence mode={isNavClick ? "sync" : "wait"}>
+                 
+
+                      {/* Actual Image: Enters slowly from right after preview */}
                       {imagesLoaded && !imageError && (
                         <motion.div
                           key={`image-${selectedProduct}-${currentImageIndex}`}
-                          initial={{ opacity: 0, x: 200, scale: 0.8, rotate: -5, filter: "blur(6px)" }}
-                          animate={{
-                            opacity: 1,
-                            x: 0,
-                            scale: 1,
-                            rotate: 0,
-                            filter: "blur(0px)",
-                            transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
-                          }}
-                          exit={{
-                            opacity: 0,
-                            x: -200,
-                            scale: 0.8,
-                            rotate: 5,
-                            filter: "blur(6px)",
-                            transition: { duration: 0.6, ease: [0.65, 0, 0.35, 1] },
-                          }}
-                          className="absolute inset-0 flex items-center justify-center"
+                          variants={imageAnimation.variants}
+                          initial="initial"
+                          animate={imageAnimation.animate}
+                          exit="exit"
+                          transition={imageAnimation.transition}
+                          className={
+                            isNavClick
+                              ? "absolute inset-0 flex items-center justify-center"
+                              : "relative z-10 cursor-pointer"
+                          }
                           style={{ transformStyle: "preserve-3d" }}
                           whileHover={{ scale: 1.05 }}
                           onTouchStart={handleTouchStart}
@@ -517,28 +535,36 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                           <Image
                             src={imageSrc}
                             alt={currentProduct.name}
-                            width={800}
-                            height={600}
-                            sizes="(max-width: 768px) 70vw, (max-width: 1200px) 60vw, 50vw"
-                            className="w-[60vw] max-w-[600px] h-auto drop-shadow-2xl transition-transform duration-500"
+                            width={1600}
+                            height={900}
+                            sizes="90vw"
+                            className="w-[60vw] max-w-[1000px] h-auto"
                             priority
-                            onLoad={() => setImagesLoaded(true)}
-                            onError={() => setImageError(true)}
+                            onLoad={() => {
+                              console.log("Main image loaded:", imageSrc);
+                              setImagesLoaded(true);
+                            }}
+                            onError={() => {
+                              console.log("Main image error:", imageSrc);
+                              setImageError(true);
+                            }}
                           />
                         </motion.div>
                       )}
                     </AnimatePresence>
+
+                    {/* Fallback/Error State */}
                     {imageError && (
-                      <div 
-                        className="absolute inset-0 flex items-center justify-center z-10 cursor-pointer bg-gray-800/50 rounded-lg"
-                        onClick={handleImageClick}
-                        style={{ transformStyle: "preserve-3d" }}
-                      >
+                      <div className="absolute inset-0 flex items-center justify-center z-10 cursor-pointer bg-gray-800/50 rounded-lg"
+                           onClick={handleImageClick}
+                           style={{ transformStyle: "preserve-3d" }}
+                           whileHover={{ scale: 1.05 }}>
                         <div className="text-center p-8">
                           <p className="text-white mb-4">Image not available</p>
                           <Button variant="outline" onClick={() => {
                             setImageError(false);
                             setImagesLoaded(false);
+                            // Trigger preload again
                             const timeout = setTimeout(() => setImageError(true), 10000);
                             setImageLoadTimeout(timeout);
                             currentProduct.images.forEach((src: string) => {
@@ -555,8 +581,10 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                         </div>
                       </div>
                     )}
+
+                    {/* Ellipse under shoe (Desktop) */}
                     <motion.div
-                      className="absolute bottom-0 md:bottom-10 w-full flex justify-center"
+                      className="absolute bottom-0 md:bottom-22 w-full flex justify-center"
                       variants={ellipseVariants}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 0.7 }}
@@ -570,21 +598,35 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                         <Image
                           src="/ellips.svg"
                           alt="Ellipse"
-                          width={700}
-                          height={60}
-                          className="w-[60vw] max-w-[600px] h-auto"
+                          width={1200}
+                          height={80}
+                          className="w-[60vw] max-w-[1000px] h-auto"
                           style={{
-                            filter: "blur(6px) drop-shadow(0 0 25px rgba(0,0,0,0.5)) drop-shadow(0 0 40px rgba(0,0,0,0.25))",
+                            filter:
+                              "blur(6px) drop-shadow(0 0 25px rgba(0,0,0,0.5)) drop-shadow(0 0 40px rgba(0,0,0,0.25))",
                           }}
                           aria-hidden="true"
                           onError={() => setEllipseError(true)}
                         />
                       ) : (
-                        <div className="w-[60vw] max-w-[600px] h-16 bg-gradient-to-r from-transparent via-white/10 to-transparent rounded-full blur-sm" />
+                        <div className="w-[60vw] max-w-[1000px] h-20 bg-gradient-to-r from-transparent via-white/10 to-transparent rounded-full blur-sm" />
                       )}
                     </motion.div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setIsNavClick(true);
+                      onNextImage();
+                    }}
+                    className="absolute right-2 z-20 text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-12 w-12 transition-all hover:scale-110"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </Button>
                 </div>
+
                 <motion.div
                   className="flex flex-row lg:flex-col gap-4 items-start self-start"
                   initial="initial"
@@ -626,9 +668,31 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                     ))}
                 </motion.div>
               </div>
-              <div className="hidden lg:flex flex-col lg:flex-row justify-center items-center mb-2 gap-6 mt-8">
+
+              {/* Desktop Footer */}
+              <div className="hidden lg:flex flex-col lg:flex-row justify-between items-center mb-2 gap-6">
+                <motion.button
+                  className="relative flex items-center justify-center gap-3 w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-4 rounded-xl font-semibold text-base sm:text-lg text-white bg-gradient-to-r from-gray-900 to-gray-700 shadow-gray-900/25 border-0 hover:shadow-xl hover:shadow-purple-500/40 hover:from-purple-700 hover:to-blue-600 active:scale-95 transition-all duration-300 group overflow-hidden"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{
+                    delay: 1.1,
+                    duration: (ANIMATION_DURATION / 1000) * 0.6,
+                  }}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={onScrollDown}
+                  aria-label="Discover more about this product"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                  <ShoppingCart className="w-5 sm:w-6 h-5 sm:h-6 transition-transform group-hover:scale-110" />
+                  <span className="font-semibold tracking-wide">
+                    Add to cart
+                  </span>
+                </motion.button>
+
                 <motion.div
-                  className="flex gap-3 items-center"
+                  className="flex gap-2 items-center"
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{
@@ -638,23 +702,11 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                     damping: 20,
                   }}
                 >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setIsNavClick(true);
-                      onPrevImage();
-                    }}
-                    className="z-20 text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-12 w-12 transition-all hover:scale-110"
-                    aria-label="Previous image"
-                  >
-                    <ChevronLeft className="h-6 w-6" />
-                  </Button>
                   {currentProduct.images.map((img: string, index: number) => (
                     <button
                       key={index}
                       onClick={() => onImageIndexChange(index)}
-                      className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                      className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
                         currentImageIndex === index
                           ? "border-white scale-105 shadow-md shadow-white/20"
                           : "border-gray-700 hover:border-white hover:scale-105"
@@ -670,260 +722,17 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                       />
                     </button>
                   ))}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setIsNavClick(true);
-                      onNextImage();
-                    }}
-                    className="z-20 text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-12 w-12 transition-all hover:scale-110"
-                    aria-label="Next image"
-                  >
-                    <ChevronRight className="h-6 w-6" />
-                  </Button>
-                </motion.div>
-              </div>
-
-              {/* Mobile Layout */}
-              <div className="lg:hidden flex flex-col items-center justify-center gap-6 px-4">
-                {/* Product Image */}
-                <div
-                  className="relative w-full h-[50vh] flex justify-center items-center"
-                  style={{ perspective: "1000px" }}
-                >
-                  <AnimatePresence mode="sync">
-                    {imagesLoaded && !imageError && (
-                      <motion.div
-                        key={`image-mobile-${selectedProduct}-${currentImageIndex}`}
-                        initial={{ opacity: 0, x: 100, scale: 0.9 }}
-                        animate={{
-                          opacity: 1,
-                          x: 0,
-                          scale: 1,
-                          transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
-                        }}
-                        exit={{
-                          opacity: 0,
-                          x: -100,
-                          scale: 0.9,
-                          transition: { duration: 0.5, ease: [0.65, 0, 0.35, 1] },
-                        }}
-                        className="absolute inset-0 flex items-center justify-center"
-                        style={{ transformStyle: "preserve-3d" }}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                        onClick={handleImageClick}
-                      >
-                        <Image
-                          src={imageSrc}
-                          alt={currentProduct.name}
-                          width={400}
-                          height={300}
-                          sizes="80vw"
-                          className="w-full max-w-[400px] h-auto drop-shadow-xl"
-                          priority
-                          onLoad={() => setImagesLoaded(true)}
-                          onError={() => setImageError(true)}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  {imageError && (
-                    <div
-                      className="absolute inset-0 flex items-center justify-center z-10 cursor-pointer bg-gray-800/50 rounded-lg"
-                      onClick={handleImageClick}
-                    >
-                      <div className="text-center p-6">
-                        <p className="text-white mb-4">Image not available</p>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setImageError(false);
-                            setImagesLoaded(false);
-                            const timeout = setTimeout(() => setImageError(true), 10000);
-                            setImageLoadTimeout(timeout);
-                            currentProduct.images.forEach((src: string) => {
-                              const img = new window.Image();
-                              img.src = src;
-                              img.onload = () => {
-                                setImagesLoaded(true);
-                                clearTimeout(timeout);
-                              };
-                            });
-                          }}
-                        >
-                          Retry
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  <motion.div
-                    className="absolute bottom-0 w-full flex justify-center"
-                    variants={ellipseVariants}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.7 }}
-                    exit="exit"
-                    transition={{
-                      duration: (ANIMATION_DURATION / 1000) * 0.8,
-                      delay: 0.2,
-                    }}
-                  >
-                    {!ellipseError ? (
-                      <Image
-                        src="/ellips.svg"
-                        alt="Ellipse"
-                        width={400}
-                        height={40}
-                        className="w-[80vw] max-w-[400px] h-auto"
-                        style={{
-                          filter: "blur(4px) drop-shadow(0 0 15px rgba(0,0,0,0.5))",
-                        }}
-                        aria-hidden="true"
-                        onError={() => setEllipseError(true)}
-                      />
-                    ) : (
-                      <div className="w-[80vw] max-w-[400px] h-12 bg-gradient-to-r from-transparent via-white/10 to-transparent rounded-full blur-sm" />
-                    )}
-                  </motion.div>
-                </div>
-
-                {/* Title and CTA */}
-                <motion.div
-                  className="flex flex-col items-center gap-4 text-center"
-                  initial={{ y: 50, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{
-                    delay: 0.4,
-                    duration: (ANIMATION_DURATION / 1000) * 0.7,
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
-                >
-                  <h1 className="text-2xl font-light leading-tight tracking-tight">
-                    <span className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold">
-                      Wear your Style
-                    </span>
-                    <span className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold mt-1">
-                      with comfort.
-                    </span>
-                  </h1>
-                  <Button
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-gray-900 to-gray-700 hover:from-purple-700 hover:to-blue-600 transition-all duration-300"
-                    onClick={onScrollDown}
-                    aria-label="Discover more about this product"
-                  >
-                    <ShoppingCart className="w-5 h-5" />
-                    Add to cart
-                  </Button>
                 </motion.div>
 
-                {/* Product Selection */}
-                <motion.div
-                  className="flex gap-3"
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{
-                    delay: 0.5,
-                    duration: (ANIMATION_DURATION / 1000) * 0.6,
-                  }}
-                >
-                  {(Object.keys(productData) as ProductColor[])
-                    .filter((key) => key !== selectedProduct)
-                    .map((key) => (
-                      <motion.button
-                        key={key}
-                        onClick={() => {
-                          onProductChange(key);
-                          onColorChange(key);
-                          onImageIndexChange(0);
-                        }}
-                        className={`relative w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${
-                          selectedProduct === key
-                            ? "border-white scale-105"
-                            : "border-gray-700 hover:border-white"
-                        }`}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        aria-label={`Select ${productData[key].name}`}
-                      >
-                        <Image
-                          src={productData[key].images[0]}
-                          alt={productData[key].name}
-                          fill
-                          sizes="60px"
-                          className="object-cover transition-transform hover:scale-110"
-                        />
-                      </motion.button>
-                    ))}
-                </motion.div>
-
-                {/* Image Navigation */}
-                <motion.div
-                  className="flex gap-2 items-center"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{
-                    delay: 0.6,
-                    type: "spring",
-                    stiffness: 200,
-                    damping: 20,
-                  }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setIsNavClick(true);
-                      onPrevImage();
-                    }}
-                    className="text-white border-2 border-white/40 rounded-full hover:bg-white/20 h-10 w-10"
-                    aria-label="Previous image"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </Button>
-                  {currentProduct.images.map((img: string, index: number) => (
-                    <button
-                      key={index}
-                      onClick={() => onImageIndexChange(index)}
-                      className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${
-                        currentImageIndex === index
-                          ? "border-white scale-105"
-                          : "border-gray-700 hover:border-white hover:scale-105"
-                      }`}
-                      aria-label={`Select image ${index + 1}`}
-                    >
-                      <Image
-                        src={img}
-                        alt={`Preview ${index + 1}`}
-                        fill
-                        sizes="50px"
-                        className="object-cover transition-transform hover:scale-110"
-                      />
-                    </button>
-                  ))}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setIsNavClick(true);
-                      onNextImage();
-                    }}
-                    className="text-white border-2 border-white/40 rounded-full hover:bg-white/20 h-10 w-10"
-                    aria-label="Next image"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
-                </motion.div>
+                <div></div>
               </div>
             </div>
           </div>
         </motion.section>
-
         <AnimatePresence>
           {showPreview && (
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-transparent"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -945,9 +754,29 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                   ease: [0.25, 0.8, 0.25, 1],
                 }}
                 onClick={(e) => e.stopPropagation()}
-                
               >
-              
+                <button
+                  className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2"
+                  onClick={() => {
+                    console.log("Close button clicked");
+                    onImageClick();
+                  }}
+                  aria-label="Close preview"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
                 {imageError ? (
                   <div className="flex flex-col items-center justify-center h-[90vh] w-[75vw] text-red-500">
                     <p>Failed to load image</p>
