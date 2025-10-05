@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -37,9 +36,8 @@ interface AirMaxSectionProps {
   onScrollDown: () => void;
   onImageClick: () => void;
   showPreview: boolean;
-  onCloseModal: () => void; // Add this
+  onCloseModal: () => void;
 }
-
 
 const defaultFeatures = [
   { icon: "✨", text: "Max Air Cushioning" },
@@ -78,13 +76,15 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
   const imageVariants = {
     initial: {
       opacity: 0,
-      scale: 1.1,
-      x: 200,
-      filter: "blur(12px)",
+      scale: 0.9,
+      y: isMobile ? 50 : 0,
+      x: isMobile ? 0 : 200,
+      filter: "blur(8px)",
     },
     animate: {
       opacity: 1,
       scale: 1,
+      y: 0,
       x: 0,
       filter: "blur(0px)",
       transition: {
@@ -97,14 +97,16 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
   const textVariants = {
     initial: {
       opacity: 0,
-      x: -50,
+      y: isMobile ? 30 : 0,
+      x: isMobile ? 0 : -50,
     },
     animate: {
       opacity: 1,
+      y: 0,
       x: 0,
       transition: {
         duration: ANIMATION_DURATION / 1000,
-        delay: 0.3,
+        delay: isMobile ? 0.1 : 0.3,
         ease: "easeOut",
       },
     },
@@ -124,84 +126,43 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
   };
 
   return (
-    <>
+    <div className="min-h-screen pt-16 md:pt-24">
       <section
         className="min-h-screen relative flex items-center justify-center overflow-hidden"
         style={{ backgroundColor: currentColorTheme.bg }}
       >
-        {/* Navigation Buttons */}
+        {/* Navigation Buttons - Mobile Optimized */}
         <div
           className={`absolute top-4 left-1/2 transform -translate-x-1/2 z-20 flex ${
-            isMobile ? "flex-col" : "gap-4"
+            isMobile ? "flex-row gap-2" : "gap-2"
           }`}
         >
           <button
             onClick={onScrollUp}
-            className="text-white/85 hover:text-white backdrop-blur-md bg-white/20 hover:bg-white/30 px-5 py-2 rounded-full border border-white/25 transition-all duration-300"
+            className="text-white/85 hover:text-white backdrop-blur-md bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full border border-white/25 transition-all duration-300 text-xs"
           >
-            <div className="flex items-center gap-2">
-              <ArrowUp className="w-4 h-4" />
-              <span className="text-xs font-medium">Back to top</span>
+            <div className="flex items-center gap-1">
+              <ArrowUp className="w-3 h-3" />
+              <span className="font-medium">Back</span>
             </div>
           </button>
           <button
             onClick={onScrollDown}
-            className="text-white/85 hover:text-white backdrop-blur-md bg-white/20 hover:bg-white/30 px-5 py-2 rounded-full border border-white/25 transition-all duration-300"
+            className="text-white/85 hover:text-white backdrop-blur-md bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full border border-white/25 transition-all duration-300 text-xs"
           >
-            <div className="flex items-center gap-2">
-              <ArrowDown className="w-4 h-4" />
-              <span className="text-xs font-medium">Next section</span>
+            <div className="flex items-center gap-1">
+              <ArrowDown className="w-3 h-3" />
+              <span className="font-medium">Next</span>
             </div>
           </button>
         </div>
 
-        {/* Main Content */}
-        <div className="relative z-10 w-full max-w-8xl mx-auto grid grid-cols-1 lg:grid-cols-12 items-center h-screen">
-          {/* Left Side - Text Content */}
+        {/* Main Content - Mobile First Design */}
+        <div className="relative z-10 w-full max-w-8xl mx-auto flex flex-col lg:flex-row items-center justify-center px-4 sm:px-6 lg:px-8 xl:px-16 min-h-screen">
+          
+          {/* Image Section - Top on Mobile, Right on Desktop */}
           <motion.div 
-            className="space-y-8 text-white lg:col-span-4 order-2 lg:order-1 px-8 lg:px-12 xl:px-16"
-            variants={textVariants}
-            initial="initial"
-            animate={activeSection === "airmax" ? "animate" : "initial"}
-          >
-            <div className="space-y-6">
-              <h1 className="text-5xl font-black leading-none">
-                <span className="block bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-                  Airmax
-                </span>
-              </h1>
-              <div className="flex items-baseline gap-3">
-                <span className="text-5xl font-black bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                  270
-                </span>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
-              {features.map((feature, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-4 text-white bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-300"
-                >
-                  <span className="text-2xl">{feature.icon}</span>
-                  <span className="text-base font-medium">{feature.text}</span>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-6">
-              <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold text-white">{price}</span>
-                <span className="text-white/60 text-base">+ Free Shipping</span>
-              </div>
-              <Button className="bg-white text-black px-10 py-6 rounded-full font-semibold hover:bg-gray-100 hover:scale-105 transition-all duration-300 text-lg shadow-2xl shadow-black/30">
-                <ShoppingCart className="w-6 h-6 mr-3" />
-                Add to Cart
-              </Button>
-            </div>
-          </motion.div>
-
-          {/* Right Side - Extra Large Image */}
-          <motion.div 
-            className="relative lg:col-span-8 order-1 lg:order-2 w-full h-[50vh] lg:h-screen overflow-visible"
+            className="relative w-full lg:w-3/5 h-[50vh] lg:h-full flex items-center justify-center order-1 lg:order-2"
             variants={imageVariants}
             initial="initial"
             animate={activeSection === "airmax" ? "animate" : "initial"}
@@ -213,30 +174,27 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
           >
             <motion.div
               layoutId={`product-image-${selectedProduct}-${currentImageIndex}`}
-              className={`relative ${
-                isMobile 
-                  ? 'w-full h-full' 
-                  : 'w-[75%] h-full -right-[12.5%]'
-              }`}
+              className="relative h-full flex items-center justify-center"
             >
               <Image
                 src={imageSrc}
                 alt={currentProduct.name}
-                width={1600}
-                height={1000}
+                width={2000}
+                height={1250}
                 priority
-                sizes="(max-width: 1024px) 100vw, 125vw"
-                className={`object-contain ${
-                  isMobile 
-                    ? 'w-full h-full' 
-                    : 'w-[125%] h-full max-w-none transform scale-150'
-                } cursor-pointer`}
+                sizes="(max-width: 640px) 90vw, (max-width: 768px) 85vw, (max-width: 1024px) 80vw, 70vw"
+                className="object-contain cursor-pointer w-full h-full lg:w-auto lg:h-[70vh] max-w-full"
+                style={{ 
+                  maxHeight: isMobile ? '50vh' : '70vh',
+                }}
                 onLoad={() => setImagesLoaded(true)}
                 onError={() => setImageError(true)}
               />
             </motion.div>
+
+            {/* Shadow Effect */}
             <motion.div
-              className="absolute bottom-0 left-0 right-0 h-24 blur-2xl"
+              className="absolute bottom-0 left-0 right-0 h-16 lg:h-32 blur-xl"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ 
                 opacity: activeSection === "airmax" ? 0.6 : 0,
@@ -247,6 +205,54 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
               <div className="w-full h-full bg-gradient-to-t from-black/70 via-black/40 to-transparent rounded-full" />
             </motion.div>
           </motion.div>
+
+          {/* Text Content Section - Bottom on Mobile, Left on Desktop */}
+          <motion.div 
+            className="w-full lg:w-2/5 h-[50vh] lg:h-full flex items-center justify-center lg:justify-start order-2 lg:order-1 py-6 lg:py-0 px-4"
+            variants={textVariants}
+            initial="initial"
+            animate={activeSection === "airmax" ? "animate" : "initial"}
+          >
+            <div className="space-y-6 lg:space-y-8 text-white max-w-md w-full text-center lg:text-left">
+              <div className="space-y-4 lg:space-y-6">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight">
+                  <span className="block bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                    Airmax
+                  </span>
+                </h1>
+                <div className="flex items-baseline gap-3 justify-center lg:justify-start">
+                  <span className="text-3xl sm:text-4xl lg:text-5xl font-black bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                    270
+                  </span>
+                </div>
+              </div>
+              
+              {/* Features Grid - Responsive */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+                {features.map((feature, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 text-white bg-white/10 backdrop-blur-sm rounded-xl lg:rounded-2xl p-3 lg:p-4 border border-white/20 hover:bg-white/15 transition-all duration-300"
+                  >
+                    <span className="text-xl lg:text-2xl">{feature.icon}</span>
+                    <span className="text-sm lg:text-base font-medium">{feature.text}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Price and CTA */}
+              <div className="space-y-4 lg:space-y-6">
+                <div className="flex items-baseline gap-3 justify-center lg:justify-start">
+                  <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">{price}</span>
+                  <span className="text-white/60 text-sm lg:text-base">+ Free Shipping</span>
+                </div>
+                <Button className="bg-white text-black w-full sm:w-auto px-6 sm:px-10 py-4 sm:py-6 rounded-full font-semibold hover:bg-gray-100 hover:scale-105 transition-all duration-300 text-base sm:text-lg shadow-2xl shadow-black/30">
+                  <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
+                  Add to Cart
+                </Button>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -254,7 +260,7 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
       <AnimatePresence>
         {showPreview && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-transparent"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -267,60 +273,19 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
             aria-label="Product image preview"
           >
             <motion.div
-              className="relative"
-              initial={{ scale: 0.9, rotateX: 15, opacity: 0 }}
-              animate={{ scale: 1.1, rotateX: 0, opacity: 1 }}
-              exit={{ scale: 0.9, rotateX: -15, opacity: 0 }}
+              className="relative mx-4"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
               transition={{
                 duration: ANIMATION_DURATION / 1000,
                 ease: [0.25, 0.8, 0.25, 1],
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* <button
-                className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2"
-                onClick={() => {
-                  console.log("Close button clicked");
-                  onImageClick();
-                }}
-                aria-label="Close preview"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button> */}
-              {imageError ? (
-                <div className="flex flex-col items-center justify-center h-[90vh] w-[75vw] text-red-500">
-                  <p>Failed to load image</p>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      console.log("Retry button clicked for modal image");
-                      setImageError(false);
-                      setImagesLoaded(false);
-                      const timeout = setTimeout(() => setImageError(true), 10000);
-                      currentProduct.images.forEach((src: string) => {
-                        const img = new window.Image();
-                        img.src = src;
-                        img.onload = () => clearTimeout(timeout);
-                      });
-                    }}
-                  >
-                    Retry
-                  </Button>
-                </div>
-              ) : !imagesLoaded ? (
-                <div className="flex items-center justify-center h-[90vh] w-[75vw]">
+              
+              {!imagesLoaded ? (
+                <div className="flex items-center justify-center h-32 w-32">
                   <div className="animate-spin h-8 w-8 border-4 border-t-white border-gray-600 rounded-full" />
                 </div>
               ) : (
@@ -329,10 +294,8 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
                   alt={currentProduct.name}
                   width={1200}
                   height={1200}
-                  sizes={isMobile ? "100vw" : "75vw"}
-                  className={`object-contain ${
-                    isMobile ? "max-h-[90vh] w-auto" : "max-h-[90vh] max-w-[75vw] w-auto"
-                  }`}
+                  sizes="95vw"
+                  className="object-contain max-h-[85vh] max-w-[95vw] w-auto"
                   priority
                   onLoad={() => {
                     console.log("Modal image loaded:", imageSrc);
@@ -348,7 +311,7 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 };
 

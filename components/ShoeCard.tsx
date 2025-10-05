@@ -32,17 +32,16 @@ interface ShoeCardProps {
   setShowPreview?: (value: boolean) => void;
 }
 
-const ANIMATION_DURATION = 700;
+const ANIMATION_DURATION = 1000;
 const ANIMATION_DURATION_S = ANIMATION_DURATION / 1000;
 
 const defaultFeatures = [
-  { text: "Top-resident seal", emoji: "🔒", delay: 0.1 },
-  { text: "End-friendly dyck", emoji: "🌿", delay: 0.2 },
-  { text: "Lightweight energy", emoji: "⚡", delay: 0.3 },
-  { text: "Sustainable Portugal", emoji: "🇵🇹", delay: 0.4 },
-  { text: "Special atmosphere", emoji: "💫", delay: 0.5 },
-  { text: "Duration discharge", emoji: "🕒", delay: 0.6 },
-  { text: "Quick dry firing", emoji: "💨", delay: 0.7 },
+  { text: "Equivalently given", emoji: "⚖️", delay: 0.1 },
+  { text: "Lightweight change", emoji: "⚡", delay: 0.3 },
+  { text: "Sustainable influence", emoji: "🌿", delay: 0.4 },
+  { text: "Shock absorption", emoji: "🛡️", delay: 0.5 },
+  { text: "Duration attaining", emoji: "⏱️", delay: 0.6 },
+
 ];
 
 const ShoeCard: React.FC<ShoeCardProps> = ({
@@ -62,69 +61,28 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
 
   const featureTags = currentProduct.features || defaultFeatures;
 
-  const imageVariants = {
-    // Enter from right side
-    scrollDownEnter: {
-      x: isMobile ? 100 : 200,
-      y: 0,
-      scale: 0.8,
-      rotate: -5,
+  // RIGHT to LEFT animation - starts from RIGHT and moves to LEFT
+  const imageAnimation = {
+    hidden: {
+      x: "-100vw", // Start from RIGHT side (completely off-screen to the right)
       opacity: 0,
-      filter: "blur(10px) brightness(0.8)",
-      transition: { 
-        duration: ANIMATION_DURATION_S * 1.2,
-        ease: [0.25, 0.46, 0.45, 0.94],
-        x: {
-          duration: ANIMATION_DURATION_S,
-          ease: [0.34, 1.56, 0.64, 1]
-        },
-        scale: {
-          duration: ANIMATION_DURATION_S * 0.8,
-          ease: [0.25, 0.8, 0.25, 1]
-        }
-      },
     },
-    // Exit to left side
-    scrollUpExit: {
-      x: isMobile ? -100 : -200,
-      y: isMobile ? 50 : 100,
-      scale: isMobile ? 0.85 : 0.9,
-      rotate: -8,
-      opacity: 0,
-      filter: "blur(8px) brightness(0.6)",
-      transition: { 
-        duration: ANIMATION_DURATION_S * 0.8,
-        ease: [0.4, 0, 0.2, 1],
-        x: {
-          duration: ANIMATION_DURATION_S * 0.6,
-          ease: [0.65, 0, 0.35, 1]
-        }
-      },
-    },
-    // Normal state - centered
-    normal: {
-      x: 0,
-      y: 0,
-      scale: 1,
-      rotate: 0,
+    visible: {
+      x: 0, // Move to final LEFT position
       opacity: 1,
-      filter: "blur(0px) brightness(1)",
       transition: {
-        duration: ANIMATION_DURATION_S * 0.6,
-        ease: [0.25, 0.8, 0.25, 1]
+        duration: ANIMATION_DURATION_S * 1.5,
+        ease: [0.25, 0.46, 0.45, 0.94],
       }
     },
-    // Hover state
-    hover: {
-      scale: isMobile ? 1.02 : 1.05,
-      y: -5,
-      x: -2,
-      rotate: -1,
-      transition: { 
-        duration: 0.3,
-        ease: "easeOut"
-      },
-    },
+    exit: {
+      x: "100vw", // Exit to LEFT side
+      opacity: 0,
+      transition: {
+        duration: ANIMATION_DURATION_S * 0.8,
+        ease: "easeIn"
+      }
+    }
   };
 
   const containerVariants = {
@@ -145,63 +103,52 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
     }
   };
 
+  const textVariants = {
+    hidden: { 
+      opacity: 0, 
+      scale: 0.8,
+    },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.6,
+        delay: 0.8,
+        ease: "easeOut"
+      }
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.8,
+      transition: { duration: 0.4 }
+    }
+  };
+
   const tagVariants = {
     hidden: { 
       opacity: 0, 
-      scale: 0.3, 
-      x: 50,
-      transition: { duration: 0.3 }
+      y: 20,
     },
     visible: (delay: number) => ({
       opacity: 1,
-      scale: 1,
-      x: 0,
+      y: 0,
       transition: { 
-        duration: 0.8, 
-        delay: delay, 
-        type: "spring", 
-        stiffness: 100, 
-        damping: 15 
+        duration: 0.6, 
+        delay: delay + 0.8,
+        ease: "easeOut"
       },
     }),
     exit: {
       opacity: 0,
-      scale: 0.3,
-      x: -50,
+      y: -20,
       transition: { duration: 0.4 }
     },
     hover: {
-      scale: 1.1,
+      scale: 1.05,
       y: -2,
       backgroundColor: "rgba(255,255,255,0.95)",
-      boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
       transition: { duration: 0.3 },
     },
-  };
-
-  const ctaVariants = {
-    hidden: { 
-      y: 50, 
-      opacity: 0,
-      scale: 0.9
-    },
-    visible: {
-      y: 0,
-      opacity: 1,
-      scale: 1,
-      transition: {
-        duration: 0.8,
-        delay: 1.2,
-        type: "spring",
-        stiffness: 80,
-        damping: 15
-      }
-    },
-    exit: {
-      y: 30,
-      opacity: 0,
-      transition: { duration: 0.4 }
-    }
   };
 
   const handleImageClick = () => {
@@ -211,28 +158,16 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
 
   const imageSrc = imageError ? "/images/fallback-shoe.png" : productImage;
 
-  const isEnteringShoeCard = isAnimating && scrollDirection === "down" && activeSection === "shoecard";
-  const isExitingToAirmax = isAnimating && scrollDirection === "up" && activeSection === "airmax";
   const isActive = activeSection === "shoecard";
 
-  // Determine animation state
-  const getImageAnimation = () => {
-    if (isEnteringShoeCard) {
-      return "scrollDownEnter";
-    } else if (isExitingToAirmax) {
-      return "scrollUpExit";
-    } else {
-      return "normal";
-    }
-  };
-
   return (
+    <div className="h-screen pt-24 mb-4">
     <motion.div
       className="min-h-screen relative flex items-center justify-center p-4 sm:p-6 overflow-hidden"
       style={{ backgroundColor: currentColorTheme.bg }}
-      variants={containerVariants}
       initial="hidden"
       animate={isActive ? "visible" : "exit"}
+      exit="exit"
     >
       {/* Scroll Up Button */}
       <motion.button
@@ -250,22 +185,21 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
         </div>
       </motion.button>
 
-      {/* Main Content Container */}
+      {/* Main Content Container - 75% Image, 25% Content */}
       <div className="relative w-full h-screen flex flex-col lg:flex-row items-center justify-between">
         
-        {/* Left Side - Image (70% of screen width on desktop) */}
+        {/* Image Section - RIGHT to LEFT animation */}
         <motion.div
-          variants={imageVariants}
-          initial="scrollDownEnter"
-          animate={getImageAnimation()}
-          whileHover="hover"
-          className="relative z-10 cursor-pointer w-full lg:w-[70%] h-[60%] lg:h-full flex items-center justify-center"
+          className="relative z-10 cursor-pointer w-full lg:w-[75%] h-[60%] lg:h-full flex items-center justify-start order-1"
           onClick={handleImageClick}
+          variants={imageAnimation}
+          initial="hidden"
+          animate={isActive ? "visible" : "exit"}
         >
-          {/* Animated Glow Effect */}
+          {/* Background Glow Effect - also from right */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/10 blur-xl rounded-full"
-            initial={{ scale: 0, opacity: 0, x: 100 }}
+            className="absolute inset-0 bg-gradient-to-l from-white/20 to-white/10 blur-xl rounded-full"
+            initial={{ scale: 0, opacity: 0, x: "100vw" }}
             animate={{ 
               scale: isMobile ? 1.5 : 2, 
               opacity: 0,
@@ -273,33 +207,18 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
             }}
             transition={{ 
               duration: 1.5, 
-              delay: 0.5,
+              delay: 0.3,
               ease: "easeOut"
             }}
           />
 
-          {/* Secondary Glow */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-white/10 to-white/5 blur-lg rounded-full"
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ 
-              scale: isMobile ? 1.2 : 1.5, 
-              opacity: 0.3 
-            }}
-            transition={{ 
-              duration: 1.2, 
-              delay: 0.8,
-              ease: "easeOut"
-            }}
-          />
-
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="relative w-full h-full flex items-center justify-start">
             <Image
               src={imageSrc}
               alt={currentProduct.name}
-              width={1600}
-              height={1200}
-              sizes="(max-width: 1024px) 100vw, 70vw"
+              width={2000}
+              height={1500}
+              sizes="(max-width: 1024px) 100vw, 75vw"
               className="object-contain drop-shadow-2xl relative z-20 w-full h-full"
               style={{ 
                 maxWidth: '100%',
@@ -311,62 +230,18 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
           </div>
         </motion.div>
 
-        {/* Right Side - Floating Tags (30% of screen width on desktop) */}
+        {/* Content Section - 25% width */}
         <motion.div 
-          className="w-full lg:w-[30%] h-[40%] lg:h-full flex flex-row lg:flex-col justify-center lg:justify-center items-center lg:items-start space-x-2 lg:space-x-0 space-y-0 lg:space-y-4 p-4 lg:pr-8 lg:pl-4 overflow-x-auto lg:overflow-visible"
-          variants={containerVariants}
+          className="w-full lg:w-[25%] h-[40%] lg:h-full flex flex-col justify-center items-center lg:items-start space-y-6 lg:space-y-8 p-4 lg:pr-8 lg:pl-6 order-2"
         >
-          {featureTags.map((tag, i) => (
-            <motion.div
-              key={i}
-              custom={tag.delay}
-              variants={tagVariants}
-              initial="hidden"
-              animate={isActive ? "visible" : "exit"}
-              whileHover="hover"
-              className="bg-white/90 backdrop-blur-sm border border-white/60 shadow-2xl px-4 py-3 rounded-2xl text-sm font-medium flex items-center gap-2 cursor-pointer whitespace-nowrap z-30 flex-shrink-0 lg:w-full"
-            >
-              <span className="text-xl">
-                {tag.emoji}
-              </span>
-              <span className="text-gray-800 font-semibold">{tag.text}</span>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Bottom CTA Section */}
-        <motion.div
-          variants={ctaVariants}
-          initial="hidden"
-          animate={isActive ? "visible" : "exit"}
-          className="absolute bottom-8 left-0 w-full flex flex-col lg:flex-row justify-between items-center px-4 lg:px-8 space-y-4 lg:space-y-0"
-        >
-          <motion.button
-            whileHover={{ 
-              scale: 1.05, 
-              boxShadow: "0 20px 40px rgba(255,255,255,0.3)",
-              y: -2
-            }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-white text-gray-900 px-6 lg:px-8 py-3 lg:py-4 rounded-2xl font-bold text-base lg:text-lg shadow-xl text-center hover:bg-gray-100 transition-all duration-300 w-full lg:w-auto"
-            onClick={() => {/* Add collection navigation logic */ }}
-          >
-            Explore Collection →
-          </motion.button>
-
+          {/* Main Heading */}
           <motion.div
-            initial={{ x: 100, opacity: 0, scale: 0.9 }}
-            animate={{ x: 0, opacity: isActive ? 1 : 0, scale: isActive ? 1 : 0.9 }}
-            transition={{ 
-              duration: 1, 
-              delay: 1, 
-              type: "spring",
-              stiffness: 60,
-              damping: 12
-            }}
-            className="text-center lg:text-right w-full lg:w-auto"
+            variants={textVariants}
+            initial="hidden"
+            animate={isActive ? "visible" : "exit"}
+            className="text-center lg:text-left w-full"
           >
-            <h1 className="text-2xl lg:text-4xl font-black text-white leading-tight">
+            <h1 className="text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight">
               <span className="bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
                 Quality
               </span>
@@ -376,9 +251,60 @@ const ShoeCard: React.FC<ShoeCardProps> = ({
               </span>
             </h1>
           </motion.div>
+
+          {/* Features List */}
+          <motion.div 
+            className="w-full space-y-2 lg:space-y-3"
+          >
+            {featureTags.map((tag, i) => (
+              <motion.div
+                key={i}
+                custom={tag.delay}
+                variants={tagVariants}
+                initial="hidden"
+                animate={isActive ? "visible" : "exit"}
+                whileHover="hover"
+                className="flex items-center gap-3 text-white/90 hover:text-white bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 hover:border-white/20 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 group w-full"
+              >
+                <span className="text-xl opacity-80 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  {tag.emoji}
+                </span>
+                <span className="text-sm font-medium tracking-wide truncate">{tag.text}</span>
+                <motion.div
+                  className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                  whileHover={{ x: 5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <span className="text-white/60 text-sm">→</span>
+                </motion.div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* CTA Button */}
+          <motion.div
+            variants={textVariants}
+            initial="hidden"
+            animate={isActive ? "visible" : "exit"}
+            className="w-full"
+          >
+            <motion.button
+              whileHover={{ 
+                scale: 1.05, 
+                boxShadow: "0 20px 40px rgba(255,255,255,0.2)",
+                y: -2
+              }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-white text-gray-900 w-full px-6 py-3 rounded-xl font-bold text-base shadow-xl hover:bg-gray-100 transition-all duration-300 text-center"
+              onClick={() => {/* Add collection navigation logic */ }}
+            >
+              Explore Collection →
+            </motion.button>
+          </motion.div>
         </motion.div>
       </div>
     </motion.div>
+    </div>
   );
 };
 

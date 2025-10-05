@@ -1,29 +1,48 @@
-"use client";
-
-import { motion } from "framer-motion";
+// src/components/HeroSection.tsx
+import React, { forwardRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, ArrowDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { Button } from "./ui/button";
 
+type ProductColor = "black" | "red";
+
+interface Product {
+  name: string;
+  images: string[];
+  releaseDate: string;
+  colorWay: string;
+}
+
+interface ColorTheme {
+  bg: string;
+  gradient: string;
+  text: string;
+}
+
 interface HeroSectionProps {
-  selectedProduct: "black" | "red";
-  selectedColor: "black" | "red";
-  currentProduct: any;
+  selectedProduct: ProductColor;
+  selectedColor: ProductColor;
+  currentProduct: Product;
   currentImageIndex: number;
-  colorThemes: Record<string, string>;
-  productData: Record<string, any>;
+  colorThemes: Record<ProductColor, ColorTheme>;
+  productData: Record<ProductColor, Product>;
   isAnimating: boolean;
   scrollDirection: "up" | "down";
-  activeSection: "hero" | "airmax";
-  onProductChange: (product: "black" | "red") => void;
-  onColorChange: (color: "black" | "red") => void;
+  activeSection: "hero" | "airmax" | "shoecard";
+  currentColorTheme: ColorTheme;
+  onProductChange: (product: ProductColor) => void;
+  onColorChange: (color: ProductColor) => void;
   onImageIndexChange: (index: number) => void;
   onNextImage: () => void;
   onPrevImage: () => void;
   onScrollDown: () => void;
+  onImageClick: () => void;
+  showPreview: boolean;
 }
+
+const ANIMATION_DURATION = 700;
 
 const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
   (
@@ -37,40 +56,272 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
       isAnimating,
       scrollDirection,
       activeSection,
+      currentColorTheme,
       onProductChange,
       onColorChange,
       onImageIndexChange,
       onNextImage,
       onPrevImage,
       onScrollDown,
+      onImageClick,
+      showPreview,
     },
     ref
   ) => {
-    const imageSrc = currentProduct.images[currentImageIndex];
+    const [imagesLoaded, setImagesLoaded] = React.useState(false);
+    const [imageError, setImageError] = React.useState(false);
+    const [ellipseError, setEllipseError] = React.useState(false);
+    const [imageLoadTimeout, setImageLoadTimeout] = React.useState<NodeJS.Timeout | null>(null);
+    const [touchStart, setTouchStart] = React.useState(0);
+    const [touchEnd, setTouchEnd] = React.useState(0);
+    const [isNavClick, setIsNavClick] = React.useState(false);
+    const [isMobile, setIsMobile] = React.useState(false);
+
+    const swipeThreshold = isMobile ? 60 : 80;
+
+    const imageSrc =
+      imageError || !currentProduct.images[currentImageIndex]
+        ? "/images/fallback-shoe.png"
+        : currentProduct.images[currentImageIndex];
+
+    React.useEffect(() => {
+      setIsMobile(typeof window !== "undefined" && window.innerWidth < 1024);
+
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 1024);
+      };
+
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    React.useEffect(() => {
+      const handleKeyPress = (e: KeyboardEvent) => {
+        if (e.key === "ArrowLeft") {
+          setIsNavClick(true);
+          onPrevImage();
+        }
+        if (e.key === "ArrowRight") {
+          setIsNavClick(true);
+          onNextImage();
+        }
+        if (e.key === "Escape" && showPreview) {
+          onImageClick();
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyPress);
+      return () => window.removeEventListener("keydown", handleKeyPress);
+    }, [onPrevImage, onNextImage, showPreview, onImageClick]);
+
+    React.useEffect(() => {
+      const preloadImages = () => {
+        if (!currentProduct.images.length) {
+          console.log("No images to preload for", currentProduct.name);
+          setImageError(true);
+          return;
+        }
+
+        setImagesLoaded(false);
+        setImageError(false);
+        let loadedCount = 0;
+        const totalImages = currentProduct.images.length;
+
+        const timeout = setTimeout(() => {
+          console.log("Image preload timeout for", currentProduct.name);
+          setImageError(true);
+          setImagesLoaded(false);
+        }, 10000);
+        setImageLoadTimeout(timeout);
+
+        currentProduct.images.forEach((src: string) => {
+          if (!src) {
+            console.log("Invalid image source:", src);
+            loadedCount++;
+            if (loadedCount === totalImages) {
+              setImagesLoaded(true);
+              clearTimeout(timeout);
+            }
+            return;
+          }
+
+          const img = new window.Image();
+          img.src = src;
+          img.onload = () => {
+            console.log("Preloaded image:", src);
+            loadedCount++;
+            if (loadedCount === totalImages) {
+              setImagesLoaded(true);
+              clearTimeout(timeout);
+            }
+          };
+          img.onerror = () => {
+            console.log("Error preloading image:", src);
+            loadedCount++;
+            if (loadedCount === totalImages) {
+              setImagesLoaded(true);
+              setImageError(true);
+              clearTimeout(timeout);
+            }
+          };
+        });
+      };
+
+      preloadImages();
+      return () => {
+        if (imageLoadTimeout) clearTimeout(imageLoadTimeout);
+      };
+    }, [currentProduct]);
+
+    React.useEffect(() => {
+      if (showPreview) {
+        const focusableElements = document.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const modal = document.querySelector("[role='dialog']");
+        if (modal) {
+          const firstElement = focusableElements[0] as HTMLElement;
+          firstElement?.focus();
+        }
+      }
+    }, [showPreview]);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+      setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+      setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchEnd = () => {
+      if (touchStart - touchEnd > swipeThreshold) {
+        setIsNavClick(true);
+        onNextImage();
+      }
+      if (touchStart - touchEnd < -swipeThreshold) {
+        setIsNavClick(true);
+        onPrevImage();
+      }
+    };
 
     const imageVariants = {
-      scrollDown: {
-        scale: [1, 1.4, 0.9],
-        y: [0, -200, 150],
-        x: [0, 80, -120],
-        rotate: [0, -15, 10],
-        opacity: [1, 0.95, 0],
-        filter: ["blur(0px) brightness(1)", "blur(2px) brightness(1.3)", "blur(3px) brightness(0.7)"],
+      initial: { 
+        x: "100vw",
+        opacity: 0, 
+        scale: 0.9,
+        rotateY: -15
+      },
+      animate: { 
+        x: 0,
+        opacity: 1, 
+        scale: 1,
+        rotateY: 0,
         transition: {
-          duration: 0.7,
+          duration: (ANIMATION_DURATION / 1000) * 1.8,
+          ease: "easeInOut",
+          x: {
+            duration: (ANIMATION_DURATION / 1000) * 1.5,
+            ease: [0.25, 0.46, 0.45, 0.94]
+          },
+          scale: {
+            duration: (ANIMATION_DURATION / 1000) * 1.2,
+            ease: [0.34, 0.16, 0.7, 1.44]
+          },
+          opacity: {
+            duration: (ANIMATION_DURATION / 1000) * 1.0,
+            ease: "easeOut"
+          }
+        }
+      },
+      exit: { 
+        x: "-100vw",
+        opacity: 0, 
+        scale: 0.9,
+        rotateY: 15,
+        transition: {
+          duration: (ANIMATION_DURATION / 1000) * 0.6,
+          ease: [0.4, 0, 0.2, 1]
+        }
+      },
+    };
+
+    const navImageVariants = {
+      initial: {
+        opacity: 0,
+        scale: 0.6,
+        rotate: -10,
+        filter: "blur(4px)",
+      },
+      animate: {
+        opacity: 1,
+        scale: 1,
+        rotate: 0,
+        filter: "blur(0px)",
+        transition: {
+          duration: (ANIMATION_DURATION / 1000) * 0.9,
+          ease: [0.22, 1, 0.36, 1],
+        },
+      },
+      exit: {
+        opacity: 0,
+        scale: 0.3,
+        rotate: 10,
+        filter: "blur(6px)",
+        transition: {
+          duration: (ANIMATION_DURATION / 1000) * 0.8,
+          ease: [0.55, 0.06, 0.68, 0.19],
+        },
+      },
+    };
+
+    const scrollImageVariants = {
+      zoomIntro: {
+        scale: isMobile ? [1.5, 1.2, 1] : [1.6, 1.2, 1],
+        y: isMobile ? [20, -10, 0] : [40, -20, 0],
+        rotateX: isMobile ? [8, -4, 0] : [12, -6, 0],
+        rotateY: isMobile ? [-6, 3, 0] : [-10, 5, 0],
+        opacity: [0, 1, 1],
+        transition: {
+          duration: (ANIMATION_DURATION / 1000) * (isMobile ? 1.2 : 1.6),
+          times: [0, 0.6, 1],
+          ease: [0.25, 0.8, 0.25, 1],
+        },
+      },
+      scrollDown: {
+        scale: isMobile ? [1, 1.1, 0.9] : [1, 1.3, 0.9],
+        y: isMobile ? [0, -80, 60] : [0, -150, 120],
+        x: isMobile ? [0, 30, -50] : [0, 60, -100],
+        rotate: isMobile ? [0, -8, 4] : [0, -12, 8],
+        opacity: [1, 0.95, 0],
+        filter: isMobile
+          ? ["blur(0px)", "blur(1px)", "blur(2px)"]
+          : [
+              "blur(0px) brightness(1)",
+              "blur(2px) brightness(1.2)",
+              "blur(3px) brightness(0.8)",
+            ],
+        transition: {
+          duration: ANIMATION_DURATION / 1000,
           times: [0, 0.5, 1],
           ease: [0.25, 0.8, 0.25, 1],
         },
       },
       scrollUp: {
-        scale: [0.9, 1.4, 1],
-        y: [150, -200, 0],
-        x: [-120, 80, 0],
-        rotate: [10, -15, 0],
+        scale: isMobile ? [0.9, 1.1, 1] : [0.9, 1.3, 1],
+        y: isMobile ? [60, -80, 0] : [120, -150, 0],
+        x: isMobile ? [-50, 30, 0] : [-100, 60, 0],
+        rotate: isMobile ? [4, -8, 0] : [8, -12, 0],
         opacity: [0, 0.95, 1],
-        filter: ["blur(3px) brightness(0.7)", "blur(2px) brightness(1.3)", "blur(0px) brightness(1)"],
+        filter: isMobile
+          ? ["blur(2px)", "blur(1px)", "blur(0px)"]
+          : [
+              "blur(3px) brightness(0.8)",
+              "blur(2px) brightness(1.2)",
+              "blur(0px) brightness(1)",
+            ],
         transition: {
-          duration: 0.7,
+          duration: ANIMATION_DURATION / 1000,
           times: [0, 0.5, 1],
           ease: [0.25, 0.8, 0.25, 1],
         },
@@ -81,272 +332,679 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
         x: 0,
         rotate: 0,
         opacity: 1,
-        filter: "blur(0px) brightness(1)",
-        willChange: "transform, opacity, filter",
-      },
-      hover: {
-        scale: 1.1,
-        y: -10,
-        rotate: -2,
-        filter: "blur(0px) brightness(1.15)",
-        transition: {
-          duration: 0.25,
-          ease: [0.4, 0, 0.2, 1],
-        },
+        filter: isMobile ? "blur(0px)" : "blur(0px) brightness(1)",
       },
     };
 
-    const containerVariants = {
-      hidden: { opacity: 0 },
-      visible: {
-        opacity: 1,
-        transition: {
-          staggerChildren: 0.1,
-          delayChildren: 0.15,
-        },
-      },
+    const ellipseVariants = {
+      initial: { opacity: 0, scale: 0.9 },
+      animate: { opacity: 0.7, scale: 1 },
+      exit: { opacity: 0, scale: 0.9 },
     };
 
-    const itemVariants = {
-      hidden: { y: 20, opacity: 0 },
-      visible: {
-        y: 0,
-        opacity: 1,
-        transition: {
-          duration: 0.5,
-          ease: [0.4, 0, 0.2, 1],
-        },
-      },
+    const getImageAnimation = () => {
+      if (
+        isAnimating &&
+        scrollDirection === "down" &&
+        activeSection === "hero"
+      ) {
+        return { variants: scrollImageVariants, animate: "scrollDown" };
+      } else if (
+        isAnimating &&
+        scrollDirection === "up" &&
+        activeSection === "airmax"
+      ) {
+        return { variants: scrollImageVariants, animate: "scrollUp" };
+      } else {
+        return {
+          variants: isNavClick ? navImageVariants : imageVariants,
+          animate: "animate",
+          initial: "initial",
+          exit: "exit",
+          transition: isNavClick
+            ? {
+                duration: (ANIMATION_DURATION / 1000) * 0.7,
+                ease: [0.4, 0, 0.2, 1],
+                scale: {
+                  duration: (ANIMATION_DURATION / 1000) * 0.5,
+                  ease: [0.34, 1.56, 0.64, 1],
+                },
+              }
+            : {
+                duration: (ANIMATION_DURATION / 1000) * 1.8,
+                ease: "easeInOut",
+                x: {
+                  duration: (ANIMATION_DURATION / 1000) * 1.5,
+                  ease: [0.25, 0.46, 0.45, 0.94]
+                },
+              },
+        };
+      }
+    };
+
+    const imageAnimation = getImageAnimation();
+
+    const handleImageClick = () => {
+      console.log("Image clicked, showPreview:", showPreview);
+      onImageClick();
+      setTimeout(() => onScrollDown(), ANIMATION_DURATION);
     };
 
     return (
-      <motion.section
-        ref={ref}
-        className={cn(
-          "min-h-screen flex items-center justify-center relative overflow-hidden",
-          "pt-8 lg:pt-0 text-white px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-900/90 to-transparent"
-        )}
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-      >
-        {/* Animated Background */}
-        <motion.div
-          className="absolute inset-0 z-0 backdrop-blur-sm bg-gradient-to-br from-[rgba(10,10,10,0.7)] to-[rgba(10,10,10,0.2)]"
-          initial={{ backgroundColor: colorThemes[selectedColor] }}
-          animate={{ backgroundColor: colorThemes[selectedColor] }}
-          transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-        />
-
-        {/* Particle System */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(12)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1.5 h-1.5 bg-white/20 rounded-full"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                y: [0, Math.random() * -40 + 20, 0],
-                opacity: [0, Math.random() * 0.3 + 0.2, 0],
-                scale: [0, Math.random() * 0.5 + 0.5, 0],
-              }}
-              transition={{
-                duration: Math.random() * 2 + 1.5,
-                repeat: Infinity,
-                delay: Math.random() * 0.8,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-        </div>
-
-        <div className="relative z-10 w-full max-w-7xl mx-auto">
-          <div className="w-full">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center min-h-[80vh]">
-              {/* Left Content */}
-              <motion.div className="col-span-1 lg:col-span-5 space-y-5" variants={itemVariants}>
-                <div>
-                  <motion.span className="text-xs uppercase tracking-widest text-gray-300 font-medium" variants={itemVariants}>
-                    New Release • {currentProduct.releaseDate}
-                  </motion.span>
-                  <motion.h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mt-2" variants={itemVariants}>
-                    <span className="block bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-                      {currentProduct.name}
-                    </span>
+      <>
+        <motion.section
+          ref={ref}
+          className={cn(
+            "min-h-screen flex items-center justify-center relative overflow-hidden",
+            "pt-8 lg:pt-0 text-white px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-900/90 to-transparent"
+          )}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{
+            duration: (ANIMATION_DURATION / 1000) * 0.8,
+            ease: "easeOut",
+          }}
+          style={{ backgroundColor: currentColorTheme.bg }}
+        >
+          <div className="relative z-10 w-full max-w-7xl mx-auto mt-10 sm:mt-12 lg:mt-16">
+            <div className="w-full">
+              {/* Desktop Layout */}
+              <div className="hidden lg:flex flex-col-reverse lg:flex-row items-center justify-center gap-8 lg:gap-12 relative mt-10">
+                <motion.div
+                  className="flex flex-col gap-6 items-start self-start lg:min-w-[300px]"
+                  initial={{ y: 80, opacity: 0, filter: "blur(10px)" }}
+                  animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
+                  transition={{
+                    delay: 0.3,
+                    duration: (ANIMATION_DURATION / 1000) * 0.9,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                >
+                  <motion.h1
+                    className="text-3xl font-light leading-tight tracking-tight"
+                    initial={{ y: 30, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{
+                      delay: 0.5,
+                      duration: (ANIMATION_DURATION / 1000) * 0.8,
+                      scale: { duration: 0.2 },
+                    }}
+                  >
+                    <motion.span
+                      className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold"
+                      whileHover={{ backgroundPosition: "100% 50%" }}
+                      style={{
+                        backgroundSize: "200% 100%",
+                        backgroundPosition: "0% 50%",
+                        transition: "background-position 0.5s ease",
+                      }}
+                    >
+                      Wear your Style
+                    </motion.span>
+                    <motion.span
+                      className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold mt-2"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{
+                        delay: 0.8,
+                        duration: (ANIMATION_DURATION / 1000) * 0.6,
+                      }}
+                    >
+                      with comfort.
+                    </motion.span>
                   </motion.h1>
+                  <motion.button
+                    className="relative flex items-center justify-center gap-3 w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-4 rounded-xl font-semibold text-base sm:text-lg text-white bg-gradient-to-r from-gray-900 to-gray-700 shadow-gray-900/25 border-0 hover:shadow-xl hover:shadow-purple-500/40 hover:from-purple-700 hover:to-blue-600 active:scale-95 transition-all duration-300 group overflow-hidden mt-6"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{
+                      delay: 1.1,
+                      duration: (ANIMATION_DURATION / 1000) * 0.6,
+                    }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onScrollDown}
+                    aria-label="Discover more about this product"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                    <ShoppingCart className="w-5 sm:w-6 h-5 sm:h-6 transition-transform group-hover:scale-110" />
+                    <span className="font-semibold tracking-wide">
+                      Add to cart
+                    </span>
+                  </motion.button>
+                </motion.div>
+                <div className="relative flex-1 flex justify-center items-center overflow-hidden max-w-[90vw] mx-auto">
+                  <div
+                    className="relative w-full h-[70vh] flex justify-center items-center overflow-visible"
+                    style={{ 
+                      perspective: "1500px",
+                      width: "100vw",
+                      position: "relative",
+                      left: "50%",
+                      transform: "translateX(-50%)"
+                    }}
+                  >
+                    <AnimatePresence mode="sync">
+                      {imagesLoaded && !imageError && (
+                        <motion.div
+                          key={`image-${selectedProduct}-${currentImageIndex}`}
+                          initial={{ opacity: 0, x: 200, scale: 0.8, rotate: -5, filter: "blur(6px)" }}
+                          animate={{
+                            opacity: 1,
+                            x: 0,
+                            scale: 1,
+                            rotate: 0,
+                            filter: "blur(0px)",
+                            transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+                          }}
+                          exit={{
+                            opacity: 0,
+                            x: -200,
+                            scale: 0.8,
+                            rotate: 5,
+                            filter: "blur(6px)",
+                            transition: { duration: 0.6, ease: [0.65, 0, 0.35, 1] },
+                          }}
+                          className="absolute inset-0 flex items-center justify-center"
+                          style={{ transformStyle: "preserve-3d" }}
+                          whileHover={{ scale: 1.05 }}
+                          onTouchStart={handleTouchStart}
+                          onTouchMove={handleTouchMove}
+                          onTouchEnd={handleTouchEnd}
+                          onClick={handleImageClick}
+                        >
+                          <Image
+                            src={imageSrc}
+                            alt={currentProduct.name}
+                            width={800}
+                            height={600}
+                            sizes="(max-width: 768px) 70vw, (max-width: 1200px) 60vw, 50vw"
+                            className="w-[60vw] max-w-[600px] h-auto drop-shadow-2xl transition-transform duration-500"
+                            priority
+                            onLoad={() => setImagesLoaded(true)}
+                            onError={() => setImageError(true)}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    {imageError && (
+                      <div 
+                        className="absolute inset-0 flex items-center justify-center z-10 cursor-pointer bg-gray-800/50 rounded-lg"
+                        onClick={handleImageClick}
+                        style={{ transformStyle: "preserve-3d" }}
+                      >
+                        <div className="text-center p-8">
+                          <p className="text-white mb-4">Image not available</p>
+                          <Button variant="outline" onClick={() => {
+                            setImageError(false);
+                            setImagesLoaded(false);
+                            const timeout = setTimeout(() => setImageError(true), 10000);
+                            setImageLoadTimeout(timeout);
+                            currentProduct.images.forEach((src: string) => {
+                              const img = new window.Image();
+                              img.src = src;
+                              img.onload = () => {
+                                setImagesLoaded(true);
+                                clearTimeout(timeout);
+                              };
+                            });
+                          }}>
+                            Retry
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    <motion.div
+                      className="absolute bottom-0 md:bottom-10 w-full flex justify-center"
+                      variants={ellipseVariants}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.7 }}
+                      exit="exit"
+                      transition={{
+                        duration: (ANIMATION_DURATION / 1000) * 0.8,
+                        delay: 0.2,
+                      }}
+                    >
+                      {!ellipseError ? (
+                        <Image
+                          src="/ellips.svg"
+                          alt="Ellipse"
+                          width={700}
+                          height={60}
+                          className="w-[60vw] max-w-[600px] h-auto"
+                          style={{
+                            filter: "blur(6px) drop-shadow(0 0 25px rgba(0,0,0,0.5)) drop-shadow(0 0 40px rgba(0,0,0,0.25))",
+                          }}
+                          aria-hidden="true"
+                          onError={() => setEllipseError(true)}
+                        />
+                      ) : (
+                        <div className="w-[60vw] max-w-[600px] h-16 bg-gradient-to-r from-transparent via-white/10 to-transparent rounded-full blur-sm" />
+                      )}
+                    </motion.div>
+                  </div>
+                </div>
+                <motion.div
+                  className="flex flex-row lg:flex-col gap-4 items-start self-start"
+                  initial="initial"
+                  animate="animate"
+                >
+                  {(Object.keys(productData) as ProductColor[])
+                    .filter((key) => key !== selectedProduct)
+                    .map((key) => (
+                      <motion.button
+                        key={key}
+                        initial={{ scale: 0.8, opacity: 0, x: 20 }}
+                        animate={{ scale: 1, opacity: 1, x: 0 }}
+                        onClick={() => {
+                          onProductChange(key);
+                          onColorChange(key);
+                          onImageIndexChange(0);
+                        }}
+                        className={`relative w-24 h-16 lg:w-28 lg:h-20 rounded-xl overflow-hidden border-2 transition-all ${
+                          selectedProduct === key
+                            ? "border-white scale-110 shadow-lg shadow-white/20"
+                            : "border-gray-700 hover:border-white"
+                        } group`}
+                        whileHover={{
+                          scale: 1.15,
+                          y: -5,
+                          boxShadow: "0 8px 20px rgba(255,255,255,0.15)",
+                        }}
+                        whileTap={{ scale: 0.95 }}
+                        aria-label={`Select ${productData[key].name}`}
+                      >
+                        <Image
+                          src={productData[key].images[0]}
+                          alt={productData[key].name}
+                          fill
+                          sizes="(max-width: 640px) 80px, 120px"
+                          className="object-cover transition-transform group-hover:scale-110"
+                        />
+                      </motion.button>
+                    ))}
+                </motion.div>
+              </div>
+              <div className="hidden lg:flex flex-col lg:flex-row justify-center items-center mb-2 gap-6 mt-8">
+                <motion.div
+                  className="flex gap-3 items-center"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{
+                    delay: 0.6,
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 20,
+                  }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setIsNavClick(true);
+                      onPrevImage();
+                    }}
+                    className="z-20 text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-12 w-12 transition-all hover:scale-110"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </Button>
+                  {currentProduct.images.map((img: string, index: number) => (
+                    <button
+                      key={index}
+                      onClick={() => onImageIndexChange(index)}
+                      className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                        currentImageIndex === index
+                          ? "border-white scale-105 shadow-md shadow-white/20"
+                          : "border-gray-700 hover:border-white hover:scale-105"
+                      }`}
+                      aria-label={`Select image ${index + 1}`}
+                    >
+                      <Image
+                        src={img}
+                        alt={`Preview ${index + 1}`}
+                        fill
+                        sizes="(max-width: 640px) 80px, 120px"
+                        className="object-cover transition-transform hover:scale-110"
+                      />
+                    </button>
+                  ))}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setIsNavClick(true);
+                      onNextImage();
+                    }}
+                    className="z-20 text-white border-2 border-white/40 rounded-full hover:bg-white/20 backdrop-blur-sm h-12 w-12 transition-all hover:scale-110"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </Button>
+                </motion.div>
+              </div>
+
+              {/* Mobile Layout */}
+              <div className="lg:hidden flex flex-col items-center justify-center gap-6 px-4">
+                {/* Product Image */}
+                <div
+                  className="relative w-full h-[50vh] flex justify-center items-center"
+                  style={{ perspective: "1000px" }}
+                >
+                  <AnimatePresence mode="sync">
+                    {imagesLoaded && !imageError && (
+                      <motion.div
+                        key={`image-mobile-${selectedProduct}-${currentImageIndex}`}
+                        initial={{ opacity: 0, x: 100, scale: 0.9 }}
+                        animate={{
+                          opacity: 1,
+                          x: 0,
+                          scale: 1,
+                          transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+                        }}
+                        exit={{
+                          opacity: 0,
+                          x: -100,
+                          scale: 0.9,
+                          transition: { duration: 0.5, ease: [0.65, 0, 0.35, 1] },
+                        }}
+                        className="absolute inset-0 flex items-center justify-center"
+                        style={{ transformStyle: "preserve-3d" }}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        onClick={handleImageClick}
+                      >
+                        <Image
+                          src={imageSrc}
+                          alt={currentProduct.name}
+                          width={400}
+                          height={300}
+                          sizes="80vw"
+                          className="w-full max-w-[400px] h-auto drop-shadow-xl"
+                          priority
+                          onLoad={() => setImagesLoaded(true)}
+                          onError={() => setImageError(true)}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  {imageError && (
+                    <div
+                      className="absolute inset-0 flex items-center justify-center z-10 cursor-pointer bg-gray-800/50 rounded-lg"
+                      onClick={handleImageClick}
+                    >
+                      <div className="text-center p-6">
+                        <p className="text-white mb-4">Image not available</p>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setImageError(false);
+                            setImagesLoaded(false);
+                            const timeout = setTimeout(() => setImageError(true), 10000);
+                            setImageLoadTimeout(timeout);
+                            currentProduct.images.forEach((src: string) => {
+                              const img = new window.Image();
+                              img.src = src;
+                              img.onload = () => {
+                                setImagesLoaded(true);
+                                clearTimeout(timeout);
+                              };
+                            });
+                          }}
+                        >
+                          Retry
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  <motion.div
+                    className="absolute bottom-0 w-full flex justify-center"
+                    variants={ellipseVariants}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.7 }}
+                    exit="exit"
+                    transition={{
+                      duration: (ANIMATION_DURATION / 1000) * 0.8,
+                      delay: 0.2,
+                    }}
+                  >
+                    {!ellipseError ? (
+                      <Image
+                        src="/ellips.svg"
+                        alt="Ellipse"
+                        width={400}
+                        height={40}
+                        className="w-[80vw] max-w-[400px] h-auto"
+                        style={{
+                          filter: "blur(4px) drop-shadow(0 0 15px rgba(0,0,0,0.5))",
+                        }}
+                        aria-hidden="true"
+                        onError={() => setEllipseError(true)}
+                      />
+                    ) : (
+                      <div className="w-[80vw] max-w-[400px] h-12 bg-gradient-to-r from-transparent via-white/10 to-transparent rounded-full blur-sm" />
+                    )}
+                  </motion.div>
                 </div>
 
-                <motion.p className="text-gray-200 text-base sm:text-lg leading-relaxed max-w-md" variants={itemVariants}>
-                  Unmatched comfort with our largest Air unit. Premium materials for all-day style. Colorway: {currentProduct.colorWay}
-                </motion.p>
-
-                <motion.div className="flex gap-4" variants={itemVariants}>
+                {/* Title and CTA */}
+                <motion.div
+                  className="flex flex-col items-center gap-4 text-center"
+                  initial={{ y: 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{
+                    delay: 0.4,
+                    duration: (ANIMATION_DURATION / 1000) * 0.7,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                >
+                  <h1 className="text-2xl font-light leading-tight tracking-tight">
+                    <span className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold">
+                      Wear your Style
+                    </span>
+                    <span className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold mt-1">
+                      with comfort.
+                    </span>
+                  </h1>
                   <Button
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-gray-900 to-gray-700 hover:from-purple-700 hover:to-blue-600 transition-all duration-300"
                     onClick={onScrollDown}
-                    className="bg-white text-black px-6 py-2.5 sm:px-8 sm:py-3 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                    aria-label="Discover more about this product"
                   >
-                    Discover AirMax
+                    <ShoppingCart className="w-5 h-5" />
+                    Add to cart
                   </Button>
                 </motion.div>
 
-                {/* Color Selector */}
-                <motion.div className="flex gap-3" variants={itemVariants}>
-                  {(Object.keys(productData) as ("black" | "red")[]).map((color) => (
-                    <motion.button
-                      key={color}
-                      onClick={() => {
-                        onProductChange(color);
-                        onColorChange(color);
-                        onImageIndexChange(0);
-                      }}
-                      className={cn(
-                        "w-8 h-8 rounded-full border-2 transition-all duration-300",
-                        selectedProduct === color ? "border-white scale-110 shadow-lg" : "border-gray-500 hover:border-gray-300"
-                      )}
-                      style={{ backgroundColor: colorThemes[color] }}
-                      whileHover={{ scale: 1.3, rotate: 10, boxShadow: "0 0 12px rgba(255,255,255,0.4)" }}
-                      whileTap={{ scale: 0.9 }}
-                    />
-                  ))}
-                </motion.div>
-              </motion.div>
-
-              {/* Center Image */}
-              <div className="col-span-1 lg:col-span-7 relative flex justify-center items-center">
+                {/* Product Selection */}
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-3xl"
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.25, 0.4, 0.25],
-                  }}
+                  className="flex gap-3"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
                   transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
+                    delay: 0.5,
+                    duration: (ANIMATION_DURATION / 1000) * 0.6,
                   }}
-                />
-
-                <motion.div
-                  className="relative cursor-pointer group"
-                  variants={imageVariants}
-                  initial="normal"
-                  animate={
-                    isAnimating && scrollDirection === "down" && activeSection === "hero"
-                      ? "scrollDown"
-                      : isAnimating && scrollDirection === "up" && activeSection === "airmax"
-                      ? "scrollUp"
-                      : "normal"
-                  }
-                  whileHover="hover"
-                  onClick={onScrollDown}
-                  style={{ willChange: "transform, opacity, filter" }}
                 >
-                  <motion.div
-                    animate={{
-                      y: [0, -10, 0],
-                      transition: {
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      },
-                    }}
-                  >
-                    <Image
-                      src={imageSrc}
-                      alt={currentProduct.name}
-                      width={800}
-                      height={600}
-                      className="object-contain w-full h-auto drop-shadow-2xl transition-all duration-300 group-hover:drop-shadow-[0_30px_30px_rgba(0,0,0,0.5)]"
-                      priority
-                    />
-                  </motion.div>
-
-                  {/* Scroll Hint */}
-                  <motion.div
-                    className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-white/85 text-sm flex items-center gap-2 backdrop-blur-md bg-white/20 px-4 py-2 rounded-full border border-white/25"
-                    animate={{
-                      y: [0, -6, 0],
-                      scale: [1, 1.05, 1],
-                    }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                  >
-                    <ArrowDown className="w-4 h-4 animate-pulse" />
-                    <span>Scroll to bottom</span>
-                  </motion.div>
+                  {(Object.keys(productData) as ProductColor[])
+                    .filter((key) => key !== selectedProduct)
+                    .map((key) => (
+                      <motion.button
+                        key={key}
+                        onClick={() => {
+                          onProductChange(key);
+                          onColorChange(key);
+                          onImageIndexChange(0);
+                        }}
+                        className={`relative w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${
+                          selectedProduct === key
+                            ? "border-white scale-105"
+                            : "border-gray-700 hover:border-white"
+                        }`}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        aria-label={`Select ${productData[key].name}`}
+                      >
+                        <Image
+                          src={productData[key].images[0]}
+                          alt={productData[key].name}
+                          fill
+                          sizes="60px"
+                          className="object-cover transition-transform hover:scale-110"
+                        />
+                      </motion.button>
+                    ))}
                 </motion.div>
 
-                {/* Navigation */}
-                {activeSection === "hero" && !isAnimating && (
-                  <motion.div
-                    className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-3 backdrop-blur-md bg-white/20 px-5 py-2 rounded-full border border-white/25"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
+                {/* Image Navigation */}
+                <motion.div
+                  className="flex gap-2 items-center"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{
+                    delay: 0.6,
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 20,
+                  }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setIsNavClick(true);
+                      onPrevImage();
+                    }}
+                    className="text-white border-2 border-white/40 rounded-full hover:bg-white/20 h-10 w-10"
+                    aria-label="Previous image"
                   >
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={onPrevImage}
-                      className="text-white border border-white/30 rounded-full hover:bg-white/30 hover:scale-110 transition-all duration-300"
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  {currentProduct.images.map((img: string, index: number) => (
+                    <button
+                      key={index}
+                      onClick={() => onImageIndexChange(index)}
+                      className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${
+                        currentImageIndex === index
+                          ? "border-white scale-105"
+                          : "border-gray-700 hover:border-white hover:scale-105"
+                      }`}
+                      aria-label={`Select image ${index + 1}`}
                     >
-                      <ChevronLeft className="h-5 w-5" />
-                    </Button>
-                    <div className="flex gap-2 items-center">
-                      {currentProduct.images.map((_, index) => (
-                        <motion.button
-                          key={index}
-                          onClick={() => onImageIndexChange(index)}
-                          className={cn(
-                            "w-2.5 h-2.5 rounded-full transition-all",
-                            index === currentImageIndex ? "bg-white scale-125" : "bg-white/40"
-                          )}
-                          whileHover={{ scale: 1.5 }}
-                          transition={{ duration: 0.2 }}
-                        />
-                      ))}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={onNextImage}
-                      className="text-white border border-white/30 rounded-full hover:bg-white/30 hover:scale-110 transition-all duration-300"
-                    >
-                      <ChevronRight className="h-5 w-5" />
-                    </Button>
-                  </motion.div>
-                )}
+                      <Image
+                        src={img}
+                        alt={`Preview ${index + 1}`}
+                        fill
+                        sizes="50px"
+                        className="object-cover transition-transform hover:scale-110"
+                      />
+                    </button>
+                  ))}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setIsNavClick(true);
+                      onNextImage();
+                    }}
+                    className="text-white border-2 border-white/40 rounded-full hover:bg-white/20 h-10 w-10"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </motion.div>
               </div>
             </div>
-
-            {/* Scroll Indicator */}
-            {activeSection === "hero" && !isAnimating && (
-              <motion.div
-                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-2 text-white/85 cursor-pointer"
-                animate={{ y: [0, 8, 0] }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-                onClick={onScrollDown}
-              >
-                <motion.div
-                  className="backdrop-blur-md bg-white/20 px-3 py-2 rounded-full border border-white/25 hover:bg-white/30 transition-all duration-300"
-                  whileHover={{ scale: 1.15, rotate: 180 }}
-                >
-                  <ArrowDown className="w-5 h-5" />
-                </motion.div>
-                <motion.span className="text-xs font-medium bg-white/15 backdrop-blur-md px-3 py-1 rounded-full" whileHover={{ scale: 1.15 }}>
-                  Scroll to bottom
-                </motion.span>
-              </motion.div>
-            )}
           </div>
-        </div>
-      </motion.section>
+        </motion.section>
+
+        <AnimatePresence>
+          {showPreview && (
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-transparent"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                console.log("Modal background clicked, closing");
+                onImageClick();
+              }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Product image preview"
+            >
+              <motion.div
+                className="relative"
+                initial={{ scale: 0.9, rotateX: 15, opacity: 0 }}
+                animate={{ scale: 1.1, rotateX: 0, opacity: 1 }}
+                exit={{ scale: 0.9, rotateX: -15, opacity: 0 }}
+                transition={{
+                  duration: ANIMATION_DURATION / 1000,
+                  ease: [0.25, 0.8, 0.25, 1],
+                }}
+                onClick={(e) => e.stopPropagation()}
+                
+              >
+              
+                {imageError ? (
+                  <div className="flex flex-col items-center justify-center h-[90vh] w-[75vw] text-red-500">
+                    <p>Failed to load image</p>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        console.log("Retry button clicked for modal image");
+                        setImageError(false);
+                        setImagesLoaded(false);
+                        const timeout = setTimeout(
+                          () => setImageError(true),
+                          10000
+                        );
+                        setImageLoadTimeout(timeout);
+                        currentProduct.images.forEach((src: string) => {
+                          const img = new window.Image();
+                          img.src = src;
+                          img.onload = () => clearTimeout(timeout);
+                        });
+                      }}
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                ) : !imagesLoaded ? (
+                  <div className="flex items-center justify-center h-[90vh] w-[75vw]">
+                    <div className="animate-spin h-8 w-8 border-4 border-t-white border-gray-600 rounded-full" />
+                  </div>
+                ) : (
+                  <Image
+                    src={imageSrc}
+                    alt={currentProduct.name}
+                    width={1200}
+                    height={1200}
+                    sizes={isMobile ? "100vw" : "75vw"}
+                    className={cn(
+                      "object-contain",
+                      isMobile
+                        ? "max-h-[90vh] w-auto"
+                        : "max-h-[90vh] max-w-[75vw] w-auto"
+                    )}
+                    priority
+                    onLoad={() => {
+                      console.log("Modal image loaded:", imageSrc);
+                      setImagesLoaded(true);
+                    }}
+                    onError={() => {
+                      console.log("Modal image error:", imageSrc);
+                      setImageError(true);
+                    }}
+                  />
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
     );
   }
 );

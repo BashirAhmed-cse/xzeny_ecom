@@ -91,6 +91,7 @@ const Header: React.FC = () => {
   }, []);
 
   return (
+    <>
     <motion.header
       className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] border-b border-white/20"
       variants={headerVariants}
@@ -240,6 +241,8 @@ const Header: React.FC = () => {
         </div>
       </motion.nav>
     </motion.header>
+
+    </>
   );
 };
 

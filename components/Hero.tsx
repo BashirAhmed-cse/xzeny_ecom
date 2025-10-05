@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { cn } from "@/lib/utils";
 import HeroSection from "./HeroSection";
 import AirMaxSection from "./AirMaxSection";
 import ShoeCard from "./ShoeCard";
@@ -27,14 +26,13 @@ const Hero: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [activeSection, setActiveSection] = useState<"hero" | "airmax" | "shoecard">("hero");
-  const [scrollDirection, setScrollDirection] = useState<"up" | "down">("down");
   const [showPreview, setShowPreview] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const airMaxRef = useRef<HTMLDivElement>(null);
   const shoeCardRef = useRef<HTMLDivElement>(null);
-  const lastScrollY = useRef(0);
+  const lastTouchY = useRef<number | null>(null);
   const isScrolling = useRef(false);
   const scrollEndTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -60,28 +58,35 @@ const Hero: React.FC = () => {
     },
   };
 
+  // Memoize current product and color theme
   const currentProduct = useMemo(() => productData[selectedProduct], [selectedProduct]);
   const currentColorTheme = useMemo(() => colorThemes[selectedColor], [selectedColor]);
-  const imageSrc = currentProduct.images[currentImageIndex] || "";
+  
+  // Memoize imageSrc to ensure it updates with currentImageIndex and currentProduct
+  const imageSrc = useMemo(
+    () => currentProduct.images[currentImageIndex] || "",
+    [currentProduct, currentImageIndex]
+  );
 
-  const handleNext = () => {
+  // Handle image navigation
+  const handleNext = useCallback(() => {
     if (currentProduct.images.length === 0) return;
     setCurrentImageIndex((prev) =>
       prev === currentProduct.images.length - 1 ? 0 : prev + 1
     );
-  };
+  }, [currentProduct.images.length]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (currentProduct.images.length === 0) return;
     setCurrentImageIndex((prev) =>
       prev === 0 ? currentProduct.images.length - 1 : prev - 1
     );
-  };
+  }, [currentProduct.images.length]);
 
-  const animateScroll = (direction: "up" | "down") => {
+  // Scroll animation logic
+  const animateScroll = useCallback((direction: "up" | "down") => {
     if (isAnimating || isScrolling.current) return;
     setIsAnimating(true);
-    setScrollDirection(direction);
     isScrolling.current = true;
     setIsTransitioning(true);
 
@@ -133,104 +138,108 @@ const Hero: React.FC = () => {
       isScrolling.current = false;
       if (scrollEndTimeout.current) clearTimeout(scrollEndTimeout.current);
     }, ANIMATION_DURATION * 2);
-  };
-
-  const handleWheel = useCallback((e: WheelEvent) => {
-    if (activeSection === "hero" && e.deltaY > 0 && !isTransitioning) {
-      e.preventDefault();
-      return false;
-    }
-  }, [activeSection, isTransitioning]);
-
-  useEffect(() => {
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    return () => window.removeEventListener("wheel", handleWheel);
-  }, [handleWheel]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const direction = scrollY > lastScrollY.current ? "down" : "up";
-      lastScrollY.current = scrollY;
-
-      if (isAnimating || isScrolling.current) return;
-
-      const heroRect = heroRef.current?.getBoundingClientRect();
-      const airMaxRect = airMaxRef.current?.getBoundingClientRect();
-      const shoeCardRect = shoeCardRef.current?.getBoundingClientRect();
-      if (!heroRect || !airMaxRect || !shoeCardRect) return;
-
-      const viewportHeight = window.innerHeight;
-
-      if (direction === "down") {
-        if (activeSection === "hero") {
-          return;
-        } else if (activeSection === "airmax" && airMaxRect.bottom <= viewportHeight * 0.8) {
-          animateScroll("down");
-        }
-      } else {
-        if (activeSection === "shoecard" && shoeCardRect.top >= viewportHeight * 0.2) {
-          animateScroll("up");
-        } else if (activeSection === "airmax" && airMaxRect.top >= viewportHeight * 0.2) {
-          animateScroll("up");
-        }
-      }
-    };
-
-    let ticking = false;
-    const throttledScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          handleScroll();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener("scroll", throttledScroll);
-    return () => window.removeEventListener("scroll", throttledScroll);
   }, [activeSection, isAnimating]);
 
-  // Updated handler for image clicks
-  const handleImageClick = () => {
-    if (activeSection === "hero") {
-      // From Hero: Show modal and go to AirMax
-      setShowPreview(true);
-      setIsTransitioning(true);
-      animateScroll("down");
-    } else if (activeSection === "airmax") {
-      // From AirMax: Show modal and go to ShoeCard
-      setShowPreview(true);
-      setIsTransitioning(true);
-      animateScroll("down");
-    }
-  };
+  // Handle wheel and touch events
+  const handleWheel = useCallback(
+    (e: WheelEvent) => {
+      if (activeSection === "hero" || (e.deltaY > 0 && (activeSection === "airmax" || activeSection === "shoecard"))) {
+        e.preventDefault();
+        return false;
+      }
+    },
+    [activeSection]
+  );
 
-  // Handler to close modal
-  const handleCloseModal = () => {
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    lastTouchY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (!lastTouchY.current) return;
+      const currentY = e.touches[0].clientY;
+      const deltaY = lastTouchY.current - currentY;
+
+      if (activeSection === "hero" || (deltaY > 0 && (activeSection === "airmax" || activeSection === "shoecard"))) {
+        e.preventDefault();
+      }
+    },
+    [activeSection]
+  );
+
+  // Reset scroll on page load
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setActiveSection("hero");
+  }, []);
+
+  // Lock body scroll
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
+  // Add event listeners
+  useEffect(() => {
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchstart", handleTouchStart, { passive: false });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [handleWheel, handleTouchStart, handleTouchMove]);
+
+  // FIXED: Only reset image index when product changes, NOT when section changes
+  useEffect(() => {
+    // Reset to first image only when product changes
+    setCurrentImageIndex(0);
+  }, [selectedProduct]); // Only depend on selectedProduct
+
+  // Handle image click for navigation
+  const handleImageClick = useCallback(() => {
+    if (activeSection === "hero" || activeSection === "airmax") {
+      setShowPreview(true);
+      setIsTransitioning(true);
+      animateScroll("down");
+    }
+  }, [activeSection, animateScroll]);
+
+  const handleCloseModal = useCallback(() => {
     setShowPreview(false);
-    if (activeSection === "airmax") {
-      // If we're in airmax and close modal, go back to hero
-      animateScroll("up");
-    } else if (activeSection === "shoecard") {
-      // If we're in shoecard and close modal, go back to airmax
+    if (activeSection === "airmax" || activeSection === "shoecard") {
       animateScroll("up");
     }
-  };
+  }, [activeSection, animateScroll]);
+
+  // Debug logging for image updates
+  useEffect(() => {
+    console.log("Image updated:", { 
+      selectedProduct, 
+      currentImageIndex, 
+      imageSrc, 
+      activeSection,
+      totalImages: currentProduct.images.length 
+    });
+  }, [imageSrc, selectedProduct, currentImageIndex, activeSection, currentProduct.images.length]);
 
   return (
-    <>
+    <div  >
       <HeroSection
         ref={heroRef}
         selectedProduct={selectedProduct}
         selectedColor={selectedColor}
         currentProduct={currentProduct}
         currentImageIndex={currentImageIndex}
+        imageSrc={imageSrc} // Explicitly pass imageSrc
         colorThemes={colorThemes}
         productData={productData}
         isAnimating={isAnimating}
-        scrollDirection={scrollDirection}
         activeSection={activeSection}
         currentColorTheme={currentColorTheme}
         onProductChange={setSelectedProduct}
@@ -241,38 +250,37 @@ const Hero: React.FC = () => {
         showPreview={showPreview}
         isTransitioning={isTransitioning}
         onImageClick={handleImageClick}
-        onCloseModal={handleCloseModal} // Add this prop
+        onCloseModal={handleCloseModal}
+        onScrollDown={() => animateScroll("down")}
       />
       <div ref={airMaxRef}>
         <AirMaxSection
           activeSection={activeSection}
           isAnimating={isAnimating}
-          scrollDirection={scrollDirection}
           currentColorTheme={currentColorTheme}
-          productImage={imageSrc}
+          productImage={imageSrc} // Use imageSrc directly
           currentProduct={currentProduct}
           selectedProduct={selectedProduct}
           currentImageIndex={currentImageIndex}
           onScrollUp={() => animateScroll("up")}
           onScrollDown={() => animateScroll("down")}
-          onImageClick={handleImageClick} // Add this to trigger modal from AirMax
-          showPreview={showPreview} // Pass showPreview state
-          onCloseModal={handleCloseModal} // Add this prop
+          onImageClick={handleImageClick}
+          showPreview={showPreview}
+          onCloseModal={handleCloseModal}
         />
       </div>
       <div ref={shoeCardRef}>
         <ShoeCard
           activeSection={activeSection}
           isAnimating={isAnimating}
-          scrollDirection={scrollDirection}
           currentColorTheme={currentColorTheme}
-          productImage={imageSrc}
+          productImage={imageSrc} // Use imageSrc directly
           currentProduct={currentProduct}
           onScrollUp={() => animateScroll("up")}
-          setShowPreview={setShowPreview} // Add this to control modal
+          setShowPreview={setShowPreview}
         />
       </div>
-    </>
+    </div>
   );
 };
 

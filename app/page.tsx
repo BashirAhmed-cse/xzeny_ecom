@@ -11,12 +11,9 @@ import Home from "@/components/Home";
 const HomePage = () => {
   const [showAirMax, setShowAirMax] = useState(false);
   return (
-    <div>
+    <div className="bg-[#0a0a0a]">
       <Hero/>
-      {/* <ProductDetails/> */}
-      {/* <ShoeCard/> */}
-
-{/* <Home/> */}
+     
     </div>
   )
 }

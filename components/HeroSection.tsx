@@ -406,10 +406,10 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
           }}
           style={{ backgroundColor: currentColorTheme.bg }}
         >
-          <div className="relative z-10 w-full max-w-7xl mx-auto mt-10 sm:mt-12 lg:mt-16">
+               <div className="relative z-10 w-full max-w-7xl mx-auto mt-10 sm:mt-12 lg:mt-16">
             <div className="w-full">
               {/* Desktop Layout */}
-              <div className="hidden lg:flex flex-col-reverse lg:flex-row items-center justify-center gap-8 lg:gap-12 relative mt-10">
+    <div className="hidden lg:flex flex-col-reverse lg:flex-row items-center justify-center gap-8 lg:gap-12 relative mt-10">
                 <motion.div
                   className="flex flex-col gap-6 items-start self-start lg:min-w-[300px]"
                   initial={{ y: 80, opacity: 0, filter: "blur(10px)" }}
@@ -515,16 +515,16 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                           onClick={handleImageClick}
                         >
                           <Image
-                            src={imageSrc}
-                            alt={currentProduct.name}
-                            width={800}
-                            height={600}
-                            sizes="(max-width: 768px) 70vw, (max-width: 1200px) 60vw, 50vw"
-                            className="w-[60vw] max-w-[600px] h-auto drop-shadow-2xl transition-transform duration-500"
-                            priority
-                            onLoad={() => setImagesLoaded(true)}
-                            onError={() => setImageError(true)}
-                          />
+        src={imageSrc}
+        alt={currentProduct.name}
+        width={1000}
+        height={545}
+        sizes="(max-width: 640px) 85vw, (max-width: 768px) 80vw, (max-width: 1024px) 65vw, (max-width: 1280px) 60vw, 55vw"
+        className="w-full max-w-[90vw] md:max-w-[55vw] md:scale-75 lg:max-w-[750px] lg:scale-100 h-auto drop-shadow-2xl transition-transform duration-500"
+        priority
+        onLoad={() => setImagesLoaded(true)}
+        onError={() => setImageError(true)}
+      />
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -556,7 +556,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                       </div>
                     )}
                     <motion.div
-                      className="absolute bottom-0 md:bottom-10 w-full flex justify-center"
+                      className="absolute bottom-0 md:bottom-4 lg:bottom-0 xl:bottom-0 2xl:bottom-12 w-full flex justify-center"
                       variants={ellipseVariants}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 0.7 }}
