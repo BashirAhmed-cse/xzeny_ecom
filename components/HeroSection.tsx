@@ -687,6 +687,45 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
 
               {/* Mobile Layout */}
               <div className="lg:hidden flex flex-col items-center justify-center gap-6 px-4">
+                {/* Product Selection */}
+                <motion.div
+                  className="flex gap-3"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{
+                    delay: 0.5,
+                    duration: (ANIMATION_DURATION / 1000) * 0.6,
+                  }}
+                >
+                  {(Object.keys(productData) as ProductColor[])
+                    .filter((key) => key !== selectedProduct)
+                    .map((key) => (
+                      <motion.button
+                        key={key}
+                        onClick={() => {
+                          onProductChange(key);
+                          onColorChange(key);
+                          onImageIndexChange(0);
+                        }}
+                        className={`relative w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${
+                          selectedProduct === key
+                            ? "border-white scale-105"
+                            : "border-gray-700 hover:border-white"
+                        }`}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        aria-label={`Select ${productData[key].name}`}
+                      >
+                        <Image
+                          src={productData[key].images[0]}
+                          alt={productData[key].name}
+                          fill
+                          sizes="60px"
+                          className="object-cover transition-transform hover:scale-110"
+                        />
+                      </motion.button>
+                    ))}
+                </motion.div>
                 {/* Product Image */}
                 <div
                   className="relative w-full h-[50vh] flex justify-center items-center"
@@ -719,9 +758,9 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                         <Image
                           src={imageSrc}
                           alt={currentProduct.name}
-                          width={400}
-                          height={300}
-                          sizes="80vw"
+                          width={500}
+                          height={400}
+                          sizes="90vw"
                           className="w-full max-w-[400px] h-auto drop-shadow-xl"
                           priority
                           onLoad={() => setImagesLoaded(true)}
@@ -788,77 +827,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                     )}
                   </motion.div>
                 </div>
-
-                {/* Title and CTA */}
-                <motion.div
-                  className="flex flex-col items-center gap-4 text-center"
-                  initial={{ y: 50, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{
-                    delay: 0.4,
-                    duration: (ANIMATION_DURATION / 1000) * 0.7,
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
-                >
-                  <h1 className="text-2xl font-light leading-tight tracking-tight">
-                    <span className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold">
-                      Wear your Style
-                    </span>
-                    <span className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold mt-1">
-                      with comfort.
-                    </span>
-                  </h1>
-                  <Button
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-gray-900 to-gray-700 hover:from-purple-700 hover:to-blue-600 transition-all duration-300"
-                    onClick={onScrollDown}
-                    aria-label="Discover more about this product"
-                  >
-                    <ShoppingCart className="w-5 h-5" />
-                    Add to cart
-                  </Button>
-                </motion.div>
-
-                {/* Product Selection */}
-                <motion.div
-                  className="flex gap-3"
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{
-                    delay: 0.5,
-                    duration: (ANIMATION_DURATION / 1000) * 0.6,
-                  }}
-                >
-                  {(Object.keys(productData) as ProductColor[])
-                    .filter((key) => key !== selectedProduct)
-                    .map((key) => (
-                      <motion.button
-                        key={key}
-                        onClick={() => {
-                          onProductChange(key);
-                          onColorChange(key);
-                          onImageIndexChange(0);
-                        }}
-                        className={`relative w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${
-                          selectedProduct === key
-                            ? "border-white scale-105"
-                            : "border-gray-700 hover:border-white"
-                        }`}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        aria-label={`Select ${productData[key].name}`}
-                      >
-                        <Image
-                          src={productData[key].images[0]}
-                          alt={productData[key].name}
-                          fill
-                          sizes="60px"
-                          className="object-cover transition-transform hover:scale-110"
-                        />
-                      </motion.button>
-                    ))}
-                </motion.div>
-
-                {/* Image Navigation */}
+ {/* Image Navigation */}
                 <motion.div
                   className="flex gap-2 items-center"
                   initial={{ scale: 0, opacity: 0 }}
@@ -915,6 +884,38 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                     <ChevronRight className="h-5 w-5" />
                   </Button>
                 </motion.div>
+                {/* Title and CTA */}
+                <motion.div
+                  className="flex flex-col items-center gap-4 text-center"
+                  initial={{ y: 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{
+                    delay: 0.4,
+                    duration: (ANIMATION_DURATION / 1000) * 0.7,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                >
+                  <h1 className="text-2xl font-light leading-tight tracking-tight">
+                    <span className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold">
+                      Wear your Style
+                    </span>
+                    <span className="block bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent font-playfair font-semibold mt-1">
+                      with comfort.
+                    </span>
+                  </h1>
+                  <Button
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-gray-900 to-gray-700 hover:from-purple-700 hover:to-blue-600 transition-all duration-300"
+                    onClick={onScrollDown}
+                    aria-label="Discover more about this product"
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    Add to cart
+                  </Button>
+                </motion.div>
+
+               
+
+                
               </div>
             </div>
           </div>

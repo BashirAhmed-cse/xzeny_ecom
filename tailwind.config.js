@@ -25,6 +25,11 @@ module.exports = {
         xs: '2px',
       }
     },
+    maxWidth: {
+      '8xl': '96rem',   // ~1536px
+      '9xl': '104rem',  // ~1664px
+      'full': '100%'    // full screen
+    },
     
   },
   plugins: [],

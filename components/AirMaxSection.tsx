@@ -127,10 +127,11 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
 
   return (
     <div className="min-h-screen pt-16 md:pt-24">
-      <section
-        className="min-h-screen relative flex items-center justify-center overflow-hidden"
-        style={{ backgroundColor: currentColorTheme.bg }}
-      >
+     <section
+  className="relative flex items-center justify-center overflow-hidden w-full max-w-full min-h-screen"
+  style={{ backgroundColor: currentColorTheme.bg }}
+>
+
         {/* Navigation Buttons - Mobile Optimized */}
         <div
           className={`absolute top-4 left-1/2 transform -translate-x-1/2 z-20 flex ${
@@ -158,57 +159,47 @@ const AirMaxSection: React.FC<AirMaxSectionProps> = ({
         </div>
 
         {/* Main Content - Mobile First Design */}
-        <div className="relative z-10 w-full max-w-8xl mx-auto flex flex-col lg:flex-row items-center justify-center px-4 sm:px-6 lg:px-8 xl:px-16 min-h-screen">
+       <div className="relative z-10 w-full mx-auto flex flex-col lg:flex-row 
+                  items-center justify-between px-4 sm:px-6 lg:px-12 xl:px-20 min-h-screen">
           
           {/* Image Section - Top on Mobile, Right on Desktop */}
-          <motion.div 
-            className="relative w-full lg:w-3/5 h-[50vh] lg:h-full flex items-center justify-center order-1 lg:order-2"
-            variants={imageVariants}
-            initial="initial"
-            animate={activeSection === "airmax" ? "animate" : "initial"}
-            onClick={handleImageClick}
-            onKeyDown={handleImageKeyDown}
-            tabIndex={0}
-            role="button"
-            aria-label={`View ${currentProduct.name} details or scroll to ShoeCard`}
-          >
-            <motion.div
-              layoutId={`product-image-${selectedProduct}-${currentImageIndex}`}
-              className="relative h-full flex items-center justify-center"
-            >
-              <Image
-                src={imageSrc}
-                alt={currentProduct.name}
-                width={2000}
-                height={1250}
-                priority
-                sizes="(max-width: 640px) 90vw, (max-width: 768px) 85vw, (max-width: 1024px) 80vw, 70vw"
-                className="object-contain cursor-pointer w-full h-full lg:w-auto lg:h-[70vh] max-w-full"
-                style={{ 
-                  maxHeight: isMobile ? '50vh' : '70vh',
-                }}
-                onLoad={() => setImagesLoaded(true)}
-                onError={() => setImageError(true)}
-              />
-            </motion.div>
+     
+<motion.div 
+      className="relative w-full lg:w-3/5 h-[50vh] lg:h-full flex items-center justify-center order-1 lg:order-2"
+      variants={imageVariants}
+      initial="initial"
+      animate={activeSection === "airmax" ? "animate" : "initial"}
+      onClick={handleImageClick}
+      onKeyDown={handleImageKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-label={`View ${currentProduct.name} details or scroll to ShoeCard`}
+    >
+      <motion.div
+        layoutId={`product-image-${selectedProduct}-${currentImageIndex}`}
+        className="relative h-full flex items-center justify-center"
+      >
+        <Image
+          src={imageSrc}
+          alt={currentProduct.name}
+          width={2000}
+          height={1250}
+          priority
+          sizes="(max-width: 640px) 90vw, (max-width: 768px) 85vw, (max-width: 1024px) 80vw, 90vw"
+          className="object-contain cursor-pointer w-full h-full lg:w-auto 
+                     lg:h-[80vh] xl:h-[85vh] max-w-full"
+          style={{ maxHeight: isMobile ? '50vh' : '85vh' }}
+          onLoad={() => setImagesLoaded(true)}
+          onError={() => setImageError(true)}
+        />
+      </motion.div>
+    </motion.div>
 
-            {/* Shadow Effect */}
-            <motion.div
-              className="absolute bottom-0 left-0 right-0 h-16 lg:h-32 blur-xl"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ 
-                opacity: activeSection === "airmax" ? 0.6 : 0,
-                scale: 1
-              }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-            >
-              <div className="w-full h-full bg-gradient-to-t from-black/70 via-black/40 to-transparent rounded-full" />
-            </motion.div>
-          </motion.div>
 
           {/* Text Content Section - Bottom on Mobile, Left on Desktop */}
           <motion.div 
-            className="w-full lg:w-2/5 h-[50vh] lg:h-full flex items-center justify-center lg:justify-start order-2 lg:order-1 py-6 lg:py-0 px-4"
+           className="w-full lg:w-2/5 h-[50vh] lg:h-full flex items-center justify-center 
+                 lg:justify-start order-2 lg:order-1 py-6 lg:py-0 px-4"
             variants={textVariants}
             initial="initial"
             animate={activeSection === "airmax" ? "animate" : "initial"}
