@@ -5,6 +5,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { Button } from "./ui/button";
+import { useTheme } from "@/lib/ThemeProvider";
 
 type ProductColor = "black" | "red";
 
@@ -23,17 +24,12 @@ interface ColorTheme {
 
 interface HeroSectionProps {
   selectedProduct: ProductColor;
-  selectedColor: ProductColor;
   currentProduct: Product;
   currentImageIndex: number;
-  colorThemes: Record<ProductColor, ColorTheme>;
-  productData: Record<ProductColor, Product>;
   isAnimating: boolean;
-  scrollDirection: "up" | "down";
   activeSection: "hero" | "airmax" | "shoecard";
   currentColorTheme: ColorTheme;
   onProductChange: (product: ProductColor) => void;
-  onColorChange: (color: ProductColor) => void;
   onImageIndexChange: (index: number) => void;
   onNextImage: () => void;
   onPrevImage: () => void;
@@ -44,21 +40,32 @@ interface HeroSectionProps {
 
 const ANIMATION_DURATION = 700;
 
+// Define product data locally to avoid prop issues
+const productData: Record<ProductColor, Product> = {
+  black: {
+    name: "AIR MAX 270",
+    images: ["/images/nike1.png", "/images/nike2.png", "/images/nike3.png", "/images/nike1.png"],
+    releaseDate: "2016-10-06",
+    colorWay: "SAIL/STARFISH-BLACK",
+  },
+  red: {
+    name: "AIR MAX 90",
+    images: ["/images/nike2.png", "/images/nike1.png", "/images/nike3.png", "/images/nike1.png"],
+    releaseDate: "2025-10-06",
+    colorWay: "SAIL/SCARLET-RED",
+  },
+};
+
 const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
   (
     {
       selectedProduct,
-      selectedColor,
       currentProduct,
       currentImageIndex,
-      colorThemes,
-      productData,
       isAnimating,
-      scrollDirection,
       activeSection,
       currentColorTheme,
       onProductChange,
-      onColorChange,
       onImageIndexChange,
       onNextImage,
       onPrevImage,
@@ -68,6 +75,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
     },
     ref
   ) => {
+    const { switchTheme } = useTheme();
     const [imagesLoaded, setImagesLoaded] = React.useState(false);
     const [imageError, setImageError] = React.useState(false);
     const [ellipseError, setEllipseError] = React.useState(false);
@@ -80,7 +88,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
     const swipeThreshold = isMobile ? 60 : 80;
 
     const imageSrc =
-      imageError || !currentProduct.images[currentImageIndex]
+      imageError || !currentProduct.images?.[currentImageIndex]
         ? "/images/fallback-shoe.png"
         : currentProduct.images[currentImageIndex];
 
@@ -116,7 +124,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
 
     React.useEffect(() => {
       const preloadImages = () => {
-        if (!currentProduct.images.length) {
+        if (!currentProduct.images?.length) {
           console.log("No images to preload for", currentProduct.name);
           setImageError(true);
           return;
@@ -205,190 +213,19 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
       }
     };
 
-    const imageVariants = {
-      initial: { 
-        x: "100vw",
-        opacity: 0, 
-        scale: 0.9,
-        rotateY: -15
-      },
-      animate: { 
-        x: 0,
-        opacity: 1, 
-        scale: 1,
-        rotateY: 0,
-        transition: {
-          duration: (ANIMATION_DURATION / 1000) * 1.8,
-          ease: "easeInOut",
-          x: {
-            duration: (ANIMATION_DURATION / 1000) * 1.5,
-            ease: [0.25, 0.46, 0.45, 0.94]
-          },
-          scale: {
-            duration: (ANIMATION_DURATION / 1000) * 1.2,
-            ease: [0.34, 0.16, 0.7, 1.44]
-          },
-          opacity: {
-            duration: (ANIMATION_DURATION / 1000) * 1.0,
-            ease: "easeOut"
-          }
-        }
-      },
-      exit: { 
-        x: "-100vw",
-        opacity: 0, 
-        scale: 0.9,
-        rotateY: 15,
-        transition: {
-          duration: (ANIMATION_DURATION / 1000) * 0.6,
-          ease: [0.4, 0, 0.2, 1]
-        }
-      },
+    const handleProductChange = (product: ProductColor) => {
+      onProductChange(product);
+      switchTheme(product); // Update global theme when product changes
     };
-
-    const navImageVariants = {
-      initial: {
-        opacity: 0,
-        scale: 0.6,
-        rotate: -10,
-        filter: "blur(4px)",
-      },
-      animate: {
-        opacity: 1,
-        scale: 1,
-        rotate: 0,
-        filter: "blur(0px)",
-        transition: {
-          duration: (ANIMATION_DURATION / 1000) * 0.9,
-          ease: [0.22, 1, 0.36, 1],
-        },
-      },
-      exit: {
-        opacity: 0,
-        scale: 0.3,
-        rotate: 10,
-        filter: "blur(6px)",
-        transition: {
-          duration: (ANIMATION_DURATION / 1000) * 0.8,
-          ease: [0.55, 0.06, 0.68, 0.19],
-        },
-      },
-    };
-
-    const scrollImageVariants = {
-      zoomIntro: {
-        scale: isMobile ? [1.5, 1.2, 1] : [1.6, 1.2, 1],
-        y: isMobile ? [20, -10, 0] : [40, -20, 0],
-        rotateX: isMobile ? [8, -4, 0] : [12, -6, 0],
-        rotateY: isMobile ? [-6, 3, 0] : [-10, 5, 0],
-        opacity: [0, 1, 1],
-        transition: {
-          duration: (ANIMATION_DURATION / 1000) * (isMobile ? 1.2 : 1.6),
-          times: [0, 0.6, 1],
-          ease: [0.25, 0.8, 0.25, 1],
-        },
-      },
-      scrollDown: {
-        scale: isMobile ? [1, 1.1, 0.9] : [1, 1.3, 0.9],
-        y: isMobile ? [0, -80, 60] : [0, -150, 120],
-        x: isMobile ? [0, 30, -50] : [0, 60, -100],
-        rotate: isMobile ? [0, -8, 4] : [0, -12, 8],
-        opacity: [1, 0.95, 0],
-        filter: isMobile
-          ? ["blur(0px)", "blur(1px)", "blur(2px)"]
-          : [
-              "blur(0px) brightness(1)",
-              "blur(2px) brightness(1.2)",
-              "blur(3px) brightness(0.8)",
-            ],
-        transition: {
-          duration: ANIMATION_DURATION / 1000,
-          times: [0, 0.5, 1],
-          ease: [0.25, 0.8, 0.25, 1],
-        },
-      },
-      scrollUp: {
-        scale: isMobile ? [0.9, 1.1, 1] : [0.9, 1.3, 1],
-        y: isMobile ? [60, -80, 0] : [120, -150, 0],
-        x: isMobile ? [-50, 30, 0] : [-100, 60, 0],
-        rotate: isMobile ? [4, -8, 0] : [8, -12, 0],
-        opacity: [0, 0.95, 1],
-        filter: isMobile
-          ? ["blur(2px)", "blur(1px)", "blur(0px)"]
-          : [
-              "blur(3px) brightness(0.8)",
-              "blur(2px) brightness(1.2)",
-              "blur(0px) brightness(1)",
-            ],
-        transition: {
-          duration: ANIMATION_DURATION / 1000,
-          times: [0, 0.5, 1],
-          ease: [0.25, 0.8, 0.25, 1],
-        },
-      },
-      normal: {
-        scale: 1,
-        y: 0,
-        x: 0,
-        rotate: 0,
-        opacity: 1,
-        filter: isMobile ? "blur(0px)" : "blur(0px) brightness(1)",
-      },
-    };
-
-    const ellipseVariants = {
-      initial: { opacity: 0, scale: 0.9 },
-      animate: { opacity: 0.7, scale: 1 },
-      exit: { opacity: 0, scale: 0.9 },
-    };
-
-    const getImageAnimation = () => {
-      if (
-        isAnimating &&
-        scrollDirection === "down" &&
-        activeSection === "hero"
-      ) {
-        return { variants: scrollImageVariants, animate: "scrollDown" };
-      } else if (
-        isAnimating &&
-        scrollDirection === "up" &&
-        activeSection === "airmax"
-      ) {
-        return { variants: scrollImageVariants, animate: "scrollUp" };
-      } else {
-        return {
-          variants: isNavClick ? navImageVariants : imageVariants,
-          animate: "animate",
-          initial: "initial",
-          exit: "exit",
-          transition: isNavClick
-            ? {
-                duration: (ANIMATION_DURATION / 1000) * 0.7,
-                ease: [0.4, 0, 0.2, 1],
-                scale: {
-                  duration: (ANIMATION_DURATION / 1000) * 0.5,
-                  ease: [0.34, 1.56, 0.64, 1],
-                },
-              }
-            : {
-                duration: (ANIMATION_DURATION / 1000) * 1.8,
-                ease: "easeInOut",
-                x: {
-                  duration: (ANIMATION_DURATION / 1000) * 1.5,
-                  ease: [0.25, 0.46, 0.45, 0.94]
-                },
-              },
-        };
-      }
-    };
-
-    const imageAnimation = getImageAnimation();
 
     const handleImageClick = () => {
       console.log("Image clicked, showPreview:", showPreview);
       onImageClick();
       setTimeout(() => onScrollDown(), ANIMATION_DURATION);
     };
+
+    // Safe product keys
+    const productKeys = Object.keys(productData) as ProductColor[];
 
     return (
       <>
@@ -406,10 +243,10 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
           }}
           style={{ backgroundColor: currentColorTheme.bg }}
         >
-               <div className="relative z-10 w-full max-w-7xl mx-auto mt-10 sm:mt-12 lg:mt-16">
+          <div className="relative z-10 w-full max-w-7xl mx-auto mt-10 sm:mt-12 lg:mt-16">
             <div className="w-full">
               {/* Desktop Layout */}
-    <div className="hidden lg:flex flex-col-reverse lg:flex-row items-center justify-center gap-8 lg:gap-12 relative mt-10">
+              <div className="hidden lg:flex flex-col-reverse lg:flex-row items-center justify-center gap-8 lg:gap-12 relative mt-10">
                 <motion.div
                   className="flex flex-col gap-6 items-start self-start lg:min-w-[300px]"
                   initial={{ y: 80, opacity: 0, filter: "blur(10px)" }}
@@ -515,16 +352,16 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                           onClick={handleImageClick}
                         >
                           <Image
-        src={imageSrc}
-        alt={currentProduct.name}
-        width={1000}
-        height={545}
-        sizes="(max-width: 640px) 85vw, (max-width: 768px) 80vw, (max-width: 1024px) 65vw, (max-width: 1280px) 60vw, 55vw"
-        className="w-full max-w-[90vw] md:max-w-[55vw] md:scale-75 lg:max-w-[750px] lg:scale-100 h-auto drop-shadow-2xl transition-transform duration-500"
-        priority
-        onLoad={() => setImagesLoaded(true)}
-        onError={() => setImageError(true)}
-      />
+                            src={imageSrc}
+                            alt={currentProduct.name}
+                            width={1000}
+                            height={545}
+                            sizes="(max-width: 640px) 85vw, (max-width: 768px) 80vw, (max-width: 1024px) 65vw, (max-width: 1280px) 60vw, 55vw"
+                            className="w-full max-w-[90vw] md:max-w-[55vw] md:scale-75 lg:max-w-[750px] lg:scale-100 h-auto drop-shadow-2xl transition-transform duration-500"
+                            priority
+                            onLoad={() => setImagesLoaded(true)}
+                            onError={() => setImageError(true)}
+                          />
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -557,10 +394,8 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                     )}
                     <motion.div
                       className="absolute bottom-0 md:bottom-4 lg:bottom-0 xl:bottom-0 2xl:bottom-12 w-full flex justify-center"
-                      variants={ellipseVariants}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 0.7 }}
-                      exit="exit"
                       transition={{
                         duration: (ANIMATION_DURATION / 1000) * 0.8,
                         delay: 0.2,
@@ -590,7 +425,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                   initial="initial"
                   animate="animate"
                 >
-                  {(Object.keys(productData) as ProductColor[])
+                  {productKeys
                     .filter((key) => key !== selectedProduct)
                     .map((key) => (
                       <motion.button
@@ -598,8 +433,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                         initial={{ scale: 0.8, opacity: 0, x: 20 }}
                         animate={{ scale: 1, opacity: 1, x: 0 }}
                         onClick={() => {
-                          onProductChange(key);
-                          onColorChange(key);
+                          handleProductChange(key);
                           onImageIndexChange(0);
                         }}
                         className={`relative w-24 h-16 lg:w-28 lg:h-20 rounded-xl overflow-hidden border-2 transition-all ${
@@ -650,7 +484,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                   >
                     <ChevronLeft className="h-6 w-6" />
                   </Button>
-                  {currentProduct.images.map((img: string, index: number) => (
+                  {currentProduct.images?.map((img: string, index: number) => (
                     <button
                       key={index}
                       onClick={() => onImageIndexChange(index)}
@@ -697,14 +531,13 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                     duration: (ANIMATION_DURATION / 1000) * 0.6,
                   }}
                 >
-                  {(Object.keys(productData) as ProductColor[])
+                  {productKeys
                     .filter((key) => key !== selectedProduct)
                     .map((key) => (
                       <motion.button
                         key={key}
                         onClick={() => {
-                          onProductChange(key);
-                          onColorChange(key);
+                          handleProductChange(key);
                           onImageIndexChange(0);
                         }}
                         className={`relative w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${
@@ -800,10 +633,8 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                   )}
                   <motion.div
                     className="absolute bottom-0 w-full flex justify-center"
-                    variants={ellipseVariants}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 0.7 }}
-                    exit="exit"
                     transition={{
                       duration: (ANIMATION_DURATION / 1000) * 0.8,
                       delay: 0.2,
@@ -827,7 +658,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                     )}
                   </motion.div>
                 </div>
- {/* Image Navigation */}
+                {/* Image Navigation */}
                 <motion.div
                   className="flex gap-2 items-center"
                   initial={{ scale: 0, opacity: 0 }}
@@ -851,7 +682,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
-                  {currentProduct.images.map((img: string, index: number) => (
+                  {currentProduct.images?.map((img: string, index: number) => (
                     <button
                       key={index}
                       onClick={() => onImageIndexChange(index)}
@@ -912,10 +743,6 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                     Add to cart
                   </Button>
                 </motion.div>
-
-               
-
-                
               </div>
             </div>
           </div>
@@ -946,9 +773,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                   ease: [0.25, 0.8, 0.25, 1],
                 }}
                 onClick={(e) => e.stopPropagation()}
-                
               >
-              
                 {imageError ? (
                   <div className="flex flex-col items-center justify-center h-[90vh] w-[75vw] text-red-500">
                     <p>Failed to load image</p>

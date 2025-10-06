@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -12,12 +11,7 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
-
-interface ColorTheme {
-  bg: string;
-  gradient: string;
-  text: string;
-}
+import { useTheme } from "@/lib/ThemeProvider";
 
 interface CartItem {
   id: string;
@@ -29,14 +23,12 @@ interface CartItem {
   quantity: number;
 }
 
-interface CartDrawerProps {
-  currentColorTheme: ColorTheme;
-}
-
 const ANIMATION_DURATION = 500; // ms, synced with Header, AirMaxSection, ShoeCard
 const ANIMATION_DURATION_S = ANIMATION_DURATION / 1000;
 
-const CartDrawer: React.FC<CartDrawerProps> = ({ currentColorTheme }) => {
+const CartDrawer: React.FC = () => {
+  const { theme } = useTheme(); // ✅ Use theme from context
+  
   const [timeLeft, setTimeLeft] = useState(137); // 2 minutes 17 seconds
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -109,6 +101,26 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ currentColorTheme }) => {
     setCartItems((items) => items.filter((item) => item.id !== id));
   };
 
+  // Calculate totals
+  const { subtotal, discount, total } = useMemo(() => {
+    const subtotal = cartItems.reduce((sum, item) => {
+      const price = parseFloat(item.discountedPrice.replace('$', ''));
+      return sum + (price * item.quantity);
+    }, 0);
+    
+    const discount = cartItems.reduce((sum, item) => {
+      const original = parseFloat(item.originalPrice.replace('$', ''));
+      const discounted = parseFloat(item.discountedPrice.replace('$', ''));
+      return sum + ((original - discounted) * item.quantity);
+    }, 0);
+    
+    return {
+      subtotal,
+      discount,
+      total: subtotal
+    };
+  }, [cartItems]);
+
   // Animation variants
   const sheetVariants = {
     hidden: { x: "100%", opacity: 0 },
@@ -154,7 +166,11 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ currentColorTheme }) => {
       {/* Drawer Content */}
       <SheetContent
         side="right"
-        className={`w-[90vw] sm:w-[450px] p-0 flex flex-col font-sans bg-${currentColorTheme.bg}/20 backdrop-blur-md border-l border-white/20`}
+        className="w-[90vw] sm:w-[450px] p-0 flex flex-col font-sans backdrop-blur-md border-l border-white/20"
+        style={{ 
+          backgroundColor: `${theme.bg}CC`, // Add transparency
+          color: theme.text 
+        }}
       >
         {/* Particles */}
         <div className="absolute inset-0 pointer-events-none">
@@ -179,13 +195,17 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ currentColorTheme }) => {
         </div>
 
         {/* Header */}
-        <SheetHeader className="flex flex-row items-center justify-between px-4 py-3 border-b border-white/20 bg-white/10 backdrop-blur-md">
-          <SheetTitle className="text-base sm:text-lg font-extrabold text-white">
+        <SheetHeader 
+          className="flex flex-row items-center justify-between px-4 py-3 border-b border-white/20 backdrop-blur-md"
+          style={{ backgroundColor: `${theme.bg}99` }}
+        >
+          <SheetTitle className="text-base sm:text-lg font-extrabold" style={{ color: theme.text }}>
             Cart • {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
           </SheetTitle>
           <SheetClose asChild>
             <motion.button
-              className="p-1 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-all duration-300"
+              className="p-1 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md transition-all duration-300"
+              style={{ color: theme.text }}
               whileHover={{ scale: 1.1, rotate: 90 }}
               whileTap={{ scale: 0.9 }}
             >
@@ -197,12 +217,13 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ currentColorTheme }) => {
         {/* Progress Bar Discount Section */}
         <motion.div
           className="px-4 py-3 border-b border-white/20"
+          style={{ backgroundColor: `${theme.bg}99` }}
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: ANIMATION_DURATION_S, type: "spring", stiffness: 120, delay: 0.2 }}
         >
           <p className="text-xs sm:text-sm font-medium text-center text-gray-200">
-            You’re 1 away from a <span className="text-orange-500 font-bold">40% discount!</span>
+            You're 1 away from a <span className="text-orange-500 font-bold">40% discount!</span>
           </p>
           <div className="relative flex items-center justify-between mt-3">
             <motion.div
@@ -235,11 +256,15 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ currentColorTheme }) => {
         </motion.div>
 
         {/* Cart Items */}
-        <div className="px-4 py-4 flex-1 overflow-y-auto">
+        <div 
+          className="px-4 py-4 flex-1 overflow-y-auto"
+          style={{ backgroundColor: `${theme.bg}80` }}
+        >
           {cartItems.map((item, index) => (
             <motion.div
               key={item.id}
-              className="flex items-start space-x-2 border border-white/20 rounded-lg p-2 relative bg-white/5 backdrop-blur-md mb-3"
+              className="flex items-start space-x-2 border border-white/20 rounded-lg p-2 relative backdrop-blur-md mb-3"
+              style={{ backgroundColor: `${theme.bg}40` }}
               variants={itemVariants}
               initial="hidden"
               animate="visible"
@@ -259,7 +284,9 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ currentColorTheme }) => {
                 </span>
               </div>
               <div className="flex-1">
-                <h3 className="text-sm sm:text-base font-semibold text-white">{item.name}</h3>
+                <h3 className="text-sm sm:text-base font-semibold" style={{ color: theme.text }}>
+                  {item.name}
+                </h3>
                 <p className="text-[10px] sm:text-xs text-gray-300">{item.size}</p>
                 <div className="flex items-center space-x-1 mt-2 border border-white/20 rounded-md w-fit bg-white/10">
                   <motion.button
@@ -270,7 +297,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ currentColorTheme }) => {
                   >
                     -
                   </motion.button>
-                  <span className="text-xs text-white">{item.quantity}</span>
+                  <span className="text-xs" style={{ color: theme.text }}>{item.quantity}</span>
                   <motion.button
                     className="px-1.5 py-1 text-gray-300 hover:text-white"
                     whileHover={{ scale: 1.1 }}
@@ -295,6 +322,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ currentColorTheme }) => {
               </div>
             </motion.div>
           ))}
+          
           {/* Trust Badges */}
           <motion.div
             className="grid grid-cols-3 gap-2 sm:gap-4 text-center mt-6 text-[10px] sm:text-xs font-medium text-gray-200"
@@ -319,7 +347,11 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ currentColorTheme }) => {
 
         {/* Timer Section */}
         <motion.div
-          className="bg-gradient-to-r from-gray-900/80 to-gray-800/80 text-white text-center py-2 text-xs sm:text-sm font-medium backdrop-blur-md"
+          className="text-white text-center py-2 text-xs sm:text-sm font-medium backdrop-blur-md"
+          style={{ 
+            background: `linear-gradient(90deg, ${theme.bg}80, ${theme.bg}CC)`,
+            color: theme.text
+          }}
           variants={timerVariants}
           initial="initial"
           animate="animate"
@@ -332,18 +364,19 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ currentColorTheme }) => {
 
         {/* Footer */}
         <motion.div
-          className="border-t border-white/20 p-4 bg-white/5 backdrop-blur-md"
+          className="border-t border-white/20 p-4 backdrop-blur-md"
+          style={{ backgroundColor: `${theme.bg}99` }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: ANIMATION_DURATION_S, type: "spring", stiffness: 120, delay: 0.3 }}
         >
           <div className="flex justify-between text-xs sm:text-sm font-medium text-gray-200">
             <span>You Save</span>
-            <span className="text-orange-500 font-bold">$80.00</span>
+            <span className="text-orange-500 font-bold">${discount.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-base sm:text-xl font-bold text-white mt-1">
+          <div className="flex justify-between text-base sm:text-xl font-bold mt-1" style={{ color: theme.text }}>
             <span>Total</span>
-            <span>$145.00</span>
+            <span>${total.toFixed(2)}</span>
           </div>
           <motion.button
             className="mt-4 w-full bg-gradient-to-r from-orange-500 to-orange-400 text-white py-3 rounded-lg font-bold text-base sm:text-lg shadow-lg hover:shadow-xl transition-all relative overflow-hidden"
@@ -361,6 +394,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ currentColorTheme }) => {
               <ChevronRight className="h-5 w-5" />
             </span>
           </motion.button>
+          
           {/* Payment Icons */}
           <motion.div
             className="flex justify-center items-center space-x-2 sm:space-x-3 mt-4"

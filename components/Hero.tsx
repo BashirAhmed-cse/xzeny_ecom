@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import HeroSection from "./HeroSection";
 import AirMaxSection from "./AirMaxSection";
 import ShoeCard from "./ShoeCard";
+import { useTheme } from "@/lib/ThemeProvider"
 
 type ProductColor = "black" | "red";
 
@@ -14,15 +15,11 @@ interface Product {
   colorWay: string;
 }
 
-interface ColorTheme {
-  bg: string;
-  gradient: string;
-  text: string;
-}
-
 const Hero: React.FC = () => {
-  const [selectedProduct, setSelectedProduct] = useState<ProductColor>("black");
-  const [selectedColor, setSelectedColor] = useState<ProductColor>("black");
+  const { theme, switchTheme, currentThemeName } = useTheme();
+  
+  // Sync selected product with current theme
+  const [selectedProduct, setSelectedProduct] = useState<ProductColor>(currentThemeName as ProductColor);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [activeSection, setActiveSection] = useState<"hero" | "airmax" | "shoecard">("hero");
@@ -37,11 +34,6 @@ const Hero: React.FC = () => {
   const scrollEndTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const ANIMATION_DURATION = 500;
-
-  const colorThemes: Record<ProductColor, ColorTheme> = {
-    black: { bg: "#0a0a0a", gradient: "from-gray-900/90 to-gray-800/90", text: "text-white" },
-    red: { bg: "#9b1b1b", gradient: "from-red-900/90 to-red-700/90", text: "text-white" },
-  };
 
   const productData: Record<ProductColor, Product> = {
     black: {
@@ -58,9 +50,20 @@ const Hero: React.FC = () => {
     },
   };
 
-  // Memoize current product and color theme
+  // Sync product selection with theme on mount and theme changes
+  useEffect(() => {
+    setSelectedProduct(currentThemeName as ProductColor);
+  }, [currentThemeName]);
+
+  // Update global theme when product changes
+  useEffect(() => {
+    if (selectedProduct !== currentThemeName) {
+      switchTheme(selectedProduct);
+    }
+  }, [selectedProduct, currentThemeName, switchTheme]);
+
+  // Memoize current product
   const currentProduct = useMemo(() => productData[selectedProduct], [selectedProduct]);
-  const currentColorTheme = useMemo(() => colorThemes[selectedColor], [selectedColor]);
   
   // Memoize imageSrc to ensure it updates with currentImageIndex and currentProduct
   const imageSrc = useMemo(
@@ -195,11 +198,10 @@ const Hero: React.FC = () => {
     };
   }, [handleWheel, handleTouchStart, handleTouchMove]);
 
-  // FIXED: Only reset image index when product changes, NOT when section changes
+  // Reset image index when product changes
   useEffect(() => {
-    // Reset to first image only when product changes
     setCurrentImageIndex(0);
-  }, [selectedProduct]); // Only depend on selectedProduct
+  }, [selectedProduct]);
 
   // Handle image click for navigation
   const handleImageClick = useCallback(() => {
@@ -229,36 +231,30 @@ const Hero: React.FC = () => {
   }, [imageSrc, selectedProduct, currentImageIndex, activeSection, currentProduct.images.length]);
 
   return (
-    <div  >
+    <div style={{ backgroundColor: theme.bg, color: theme.text }}>
       <HeroSection
-        ref={heroRef}
-        selectedProduct={selectedProduct}
-        selectedColor={selectedColor}
-        currentProduct={currentProduct}
-        currentImageIndex={currentImageIndex}
-        imageSrc={imageSrc} // Explicitly pass imageSrc
-        colorThemes={colorThemes}
-        productData={productData}
-        isAnimating={isAnimating}
-        activeSection={activeSection}
-        currentColorTheme={currentColorTheme}
-        onProductChange={setSelectedProduct}
-        onColorChange={setSelectedColor}
-        onImageIndexChange={setCurrentImageIndex}
-        onNextImage={handleNext}
-        onPrevImage={handlePrev}
-        showPreview={showPreview}
-        isTransitioning={isTransitioning}
-        onImageClick={handleImageClick}
-        onCloseModal={handleCloseModal}
-        onScrollDown={() => animateScroll("down")}
-      />
+  ref={heroRef}
+  selectedProduct={selectedProduct}
+  currentProduct={currentProduct}
+  currentImageIndex={currentImageIndex}
+  isAnimating={isAnimating}
+  activeSection={activeSection}
+  currentColorTheme={theme} // Use theme from context
+  onProductChange={setSelectedProduct}
+  onImageIndexChange={setCurrentImageIndex}
+  onNextImage={handleNext}
+  onPrevImage={handlePrev}
+  showPreview={showPreview}
+  isTransitioning={isTransitioning}
+  onImageClick={handleImageClick}
+  onScrollDown={() => animateScroll("down")}
+/>
       <div ref={airMaxRef}>
         <AirMaxSection
           activeSection={activeSection}
           isAnimating={isAnimating}
-          currentColorTheme={currentColorTheme}
-          productImage={imageSrc} // Use imageSrc directly
+          currentColorTheme={theme}
+          productImage={imageSrc}
           currentProduct={currentProduct}
           selectedProduct={selectedProduct}
           currentImageIndex={currentImageIndex}
@@ -273,8 +269,8 @@ const Hero: React.FC = () => {
         <ShoeCard
           activeSection={activeSection}
           isAnimating={isAnimating}
-          currentColorTheme={currentColorTheme}
-          productImage={imageSrc} // Use imageSrc directly
+          currentColorTheme={theme}
+          productImage={imageSrc}
           currentProduct={currentProduct}
           onScrollUp={() => animateScroll("up")}
           setShowPreview={setShowPreview}

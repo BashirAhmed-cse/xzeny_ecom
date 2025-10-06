@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
-
+import { ThemeProvider } from "@/lib/ThemeProvider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -23,6 +23,8 @@ export const metadata: Metadata = {
   description: "Premium fashion and accessories",
 };
 
+
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -33,10 +35,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} antialiased font-sans`}
       >
+        <ThemeProvider>
         <Header />
        <main > 
           {children}
         </main>
+        </ThemeProvider>
       </body>
     </html>
   );
